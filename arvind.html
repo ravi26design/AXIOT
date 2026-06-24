@@ -2464,8 +2464,19 @@
   </div>
 </div>
 
+<!-- DASHBOARD OVERVIEW SCREEN -->
+<div class="screen active" id="screen-dashboard">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <div class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="content" id="dashboardContent"></div>
+    </div>
+  </div>
+</div>
+
 <!-- DASHBOARDS SCREEN -->
-<div class="screen active" id="screen-dashboards">
+<div class="screen" id="screen-dashboards">
   <div class="app">
     <aside class="sidebar" data-sidebar></aside>
     <div class="main">
@@ -3353,7 +3364,7 @@ const SVG = {
 };
 
 const NAV = [
-  { key: 'dashboards', label: 'Dashboards', ico: li('layout-dashboard'), screen: 'dashboards' },
+  { key: 'dashboard', label: 'Dashboard', ico: li('gauge'), screen: 'dashboard' },
   { section: 'Administration' },
   { key: 'enterprises', label: 'Enterprises', ico: li('building-2'), screen: 'enterprises', adminOnly: true },
   { key: 'customers',   label: 'Clients',            ico: li('user-round'), screen: 'customers', hideInClientView: true },
@@ -3368,7 +3379,8 @@ const NAV = [
       { key: 'entityViews',    label: 'Entity views',    ico: li('layout-grid'),  comingSoon: true },
       { key: 'gateways',       label: 'Gateways',        ico: li('share-2'),      screen: 'gateways' }
     ]
-  }
+  },
+  { key: 'dashboards', label: 'Dashboards', ico: li('layout-dashboard'), screen: 'dashboards' }
 ];
 
 const RESOURCES = [
@@ -3429,7 +3441,7 @@ const initialIndustries = [
 ];
 
 const state = {
-  currentScreen: 'dashboards',
+  currentScreen: 'dashboard',
   roles: JSON.parse(JSON.stringify(initialRoles)),
   industries: JSON.parse(JSON.stringify(initialIndustries)),
   selectedRoleId: 'dl-super',
@@ -3799,6 +3811,7 @@ try { if (localStorage.getItem('axiot-sidebar-collapsed') === '1') document.body
 function renderTopbar() {
   const unread = NOTIFS.filter(n => n.unread).length;
   const titles = {
+    dashboard: 'Dashboard',
     users: 'Users',
     roles: 'Roles & permissions',
     industries: 'Industries',
@@ -8692,6 +8705,93 @@ const DASHBOARDS = [
 ];
 state.editingDashboardId = null;
 
+function dashStat(label, value, sub, icon, color) {
+  return `<div class="stat-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="stat-label">${label}</div>
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--primary-soft);color:${color};display:grid;place-items:center">${li(icon)}</div>
+    </div>
+    <div class="stat-value">${value}</div>
+    <div class="stat-delta">${sub}</div>
+  </div>`;
+}
+function renderDashboard() {
+  const c = document.getElementById('dashboardContent');
+  if (!c) return;
+  let devs = DEVICES;
+  if (VIEW_CLIENT) devs = devs.filter(d => d.client === VIEW_CLIENT);
+  const gws = (typeof GATEWAYS !== 'undefined') ? GATEWAYS : [];
+  const total = devs.length;
+  const active = devs.filter(d => d.active !== false).length;
+  const inactive = total - active;
+  const gwActive = gws.filter(g => g.status === 'Active').length;
+  const profiles = (typeof DEVICE_PROFILES !== 'undefined') ? DEVICE_PROFILES.length : 0;
+  const openAlarms = gws.filter(g => g.status === 'Inactive').length + inactive;
+  const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+  const byInd = {};
+  devs.forEach(d => { const k = d.location || 'Unassigned'; byInd[k] = (byInd[k] || 0) + 1; });
+  const indRows = Object.keys(byInd).sort((a, b) => byInd[b] - byInd[a]).slice(0, 6);
+  const indMax = Math.max(1, ...indRows.map(k => byInd[k]));
+
+  c.innerHTML = `
+    <div class="page-head">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Fleet health and activity across your AXIoT workspace.</div>
+      </div>
+    </div>
+    <div class="stats">
+      ${dashStat('Total devices', total, `${active} active · ${inactive} inactive`, 'cpu', 'var(--primary)')}
+      ${dashStat('Gateways online', `${gwActive}/${gws.length}`, `${gws.length - gwActive} offline`, 'share-2', 'var(--success)')}
+      ${dashStat('Device profiles', profiles, 'reusable templates', 'layers', 'var(--primary)')}
+      ${dashStat('Open alarms', openAlarms, openAlarms ? 'needs attention' : 'all clear', 'triangle-alert', openAlarms ? 'var(--danger)' : 'var(--success)')}
+    </div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start">
+      <div class="panel" style="padding:18px 20px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Devices by industry</div>
+        <div class="hint" style="margin-bottom:16px">Where your fleet is deployed.</div>
+        ${indRows.length ? indRows.map(k => `
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>${_kvEscape(k)}</span><span style="color:var(--text-muted)">${byInd[k]}</span></div>
+            <div style="height:8px;background:var(--bg-hover);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct(byInd[k], indMax)}%;background:var(--primary);border-radius:6px"></div></div>
+          </div>`).join('') : '<div class="hint">No devices yet.</div>'}
+      </div>
+      <div class="panel" style="padding:18px 20px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Device status</div>
+        <div class="hint" style="margin-bottom:18px">Active vs inactive.</div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <div style="position:relative;width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--success) 0 ${pct(active, total)}%, var(--bg-hover) ${pct(active, total)}% 100%);display:grid;place-items:center;flex-shrink:0">
+            <div style="width:80px;height:80px;border-radius:50%;background:var(--surface);display:grid;place-items:center">
+              <div style="font-size:22px;font-weight:700;line-height:1">${pct(active, total)}%</div>
+            </div>
+          </div>
+          <div style="font-size:13px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:10px;height:10px;border-radius:3px;background:var(--success)"></span>Active <b style="margin-left:6px">${active}</b></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:var(--bg-hover)"></span>Inactive <b style="margin-left:6px">${inactive}</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px;padding:18px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:600;font-size:15px">Gateways</div>
+        <a style="color:var(--primary);font-size:13px;font-weight:500;cursor:pointer" onclick="switchScreen('gateways')">View all →</a>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Gateway</th><th>Status</th><th>Connectors</th><th>Version</th></tr></thead>
+        <tbody>${gws.slice(0, 5).map(g => `<tr>
+          <td><span class="cell-user-name">${_kvEscape(g.name)}</span></td>
+          <td>${g.status === 'Active' ? '<span class="chip chip-active"><span class="dot"></span>Active</span>' : '<span class="chip chip-inactive"><span class="dot"></span>Inactive</span>'}</td>
+          <td style="color:var(--text-muted)">${g.connectors || 0}</td>
+          <td style="color:var(--text-muted)">${_kvEscape(g.version || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+  `;
+  if (window.lucide) window.lucide.createIcons();
+}
+
 function renderDashboardsPage() {
   const q = (document.getElementById('dashboardSearch') && document.getElementById('dashboardSearch').value || '').toLowerCase();
   let list = DASHBOARDS;
@@ -8974,6 +9074,7 @@ function switchScreen(name) {
   if (name === 'customers')      renderCustomersPage();
   if (name === 'deviceProfiles') renderDeviceProfilesPage();
   if (name === 'gateways')       renderGatewaysPage();
+  if (name === 'dashboard')      renderDashboard();
   if (name === 'dashboards')     renderDashboardsPage();
   if (name === 'enterprises')    renderEnterprisesPage();
   if (name === 'gatewayDetails') renderGatewayDetails();
@@ -10148,6 +10249,7 @@ function toast(msg, type = '') {
 /* ============================================================
    Init
    ============================================================ */
+renderSidebar('dashboard');
 renderSidebar('users');
 renderSidebar('roles');
 renderSidebar('industries');
@@ -10166,6 +10268,7 @@ renderCustomersPage();
 renderDeviceProfilesPage();
 renderGatewaysPage();
 renderDashboardsPage();
+renderDashboard();
 if (window.lucide) window.lucide.createIcons();
 
 /* Hover tooltip activation: convert titleâdata-tip on icon-only controls
