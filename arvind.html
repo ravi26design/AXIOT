@@ -8809,9 +8809,6 @@ function renderDashboardsPage() {
       <td onclick="event.stopPropagation()"><input type="checkbox" ${d.public ? 'checked' : ''} onchange="toggleDashboardPublic('${d.id}')" style="cursor:pointer" /></td>
       <td onclick="event.stopPropagation()">
         <div class="row-actions">
-          <button class="icon-btn" title="Export" onclick="exportDashboard('${d.id}')">${li('download')}</button>
-          <button class="icon-btn" title="Share public link" onclick="shareDashboard('${d.id}')">${li('share-2')}</button>
-          <button class="icon-btn" title="Unassign customers" onclick="unassignDashboard('${d.id}')">${li('corner-up-left')}</button>
           <button class="icon-btn" title="Assign to customers" onclick="openDashboardDrawer('${d.id}')">${li('contact')}</button>
           <button class="icon-btn" title="Edit" onclick="openDashboardDrawer('${d.id}')">${li('pencil')}</button>
           <button class="icon-btn" title="Delete" onclick="deleteDashboard('${d.id}')" style="color:var(--danger)">${li('trash-2')}</button>
