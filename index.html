@@ -2528,11 +2528,21 @@
   <div class="drawer-body">
     <div class="form-section">
       <div class="field"><label class="label">Title <span class="req">*</span></label><input class="input" id="dashTitle" placeholder="e.g. Plant Overview" /></div>
-      <div class="field"><label class="label">Assign to customers</label><div id="dashCustList" style="display:flex;flex-direction:column;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;max-height:260px;overflow:auto"></div><div class="hint">Assigned customers can view this dashboard.</div></div>
+      <div class="field"><label class="label">Description</label><textarea class="textarea" id="dashDesc" placeholder="Short description of this dashboard"></textarea></div>
+      <div class="field"><label class="label">Assigned customers</label><div id="dashCustList" style="display:flex;flex-direction:column;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;max-height:220px;overflow:auto"></div><div class="hint">Assigned customers can view this dashboard.</div></div>
     </div>
     <div class="form-section">
-      <div class="form-section-title">Public</div>
-      <div class="field"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px"><div><div style="font-size:14px;font-weight:500">Public dashboard</div><div class="hint" style="margin-top:4px">Anyone with the link can view, without signing in.</div></div><div class="switch" id="dashPublic" onclick="this.classList.toggle('on')"></div></div></div>
+      <div class="form-section-title">Mobile application settings</div>
+      <div class="field"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px"><div><div style="font-size:14px;font-weight:500">Hide dashboard in mobile application</div><div class="hint" style="margin-top:4px">Keep this dashboard off the AXIoT mobile app.</div></div><div class="switch" id="dashHideMobile" onclick="this.classList.toggle('on')"></div></div></div>
+      <div class="field"><label class="label">Dashboard order in mobile application</label><input class="input" id="dashOrder" inputmode="numeric" placeholder="e.g. 1" oninput="this.value=this.value.replace(/[^0-9]/g,'')" /></div>
+      <div class="field"><label class="label">Dashboard image</label>
+        <input type="file" id="dashImgInput" accept="image/png,image/jpeg,image/jpg,image/webp" style="display:none" onchange="dashImageSelect(event)" />
+        <div style="display:grid;grid-template-columns:118px 1fr 1fr;gap:10px;align-items:stretch">
+          <div id="dashImgPreview" style="border:1px solid var(--border);border-radius:8px;display:grid;place-items:center;text-align:center;font-size:12px;color:var(--text-subtle);min-height:90px;overflow:hidden;background:var(--bg);padding:6px">No image selected</div>
+          <button type="button" onclick="document.getElementById('dashImgInput').click()" style="border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--primary);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:500;min-height:90px"><i data-lucide="image"></i>Browse from gallery</button>
+          <button type="button" onclick="dashSetImageLink()" style="border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--primary);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:500;min-height:90px"><i data-lucide="link"></i>Set link</button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="drawer-foot">
@@ -8723,7 +8733,11 @@ function openDashboardDrawer(id) {
   document.getElementById('dashboardDrawerTitle').textContent = d ? 'Edit dashboard' : 'Add dashboard';
   document.getElementById('dashSubmitBtn').textContent = d ? 'Save changes' : 'Create';
   document.getElementById('dashTitle').value = d ? d.title : '';
-  document.getElementById('dashPublic').classList.toggle('on', d ? !!d.public : false);
+  document.getElementById('dashDesc').value = d ? (d.description || '') : '';
+  document.getElementById('dashHideMobile').classList.toggle('on', d ? !!d.hideMobile : false);
+  document.getElementById('dashOrder').value = d ? (d.mobileOrder || '') : '';
+  state._dashImg = d ? (d.image || null) : null;
+  dashRenderImg();
   const assigned = d ? (d.customers || []) : [];
   const custs = (VIEW_CLIENT ? CUSTOMERS.filter(c => c.title === VIEW_CLIENT) : CUSTOMERS);
   document.getElementById('dashCustList').innerHTML = custs.map(c => `
@@ -8740,19 +8754,40 @@ function closeDashboardDrawer() {
   document.getElementById('dashboardDrawerBackdrop').classList.remove('open');
   state.editingDashboardId = null;
 }
+function dashRenderImg() {
+  const el = document.getElementById('dashImgPreview');
+  if (!el) return;
+  if (state._dashImg) { el.innerHTML = `<img src="${_kvEscape(state._dashImg)}" alt="" style="width:100%;height:100%;object-fit:cover" />`; }
+  else { el.textContent = 'No image selected'; }
+}
+function dashImageSelect(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  if (f.size > 5 * 1024 * 1024) { toast('Image must be under 5 MB', 'danger'); return; }
+  const r = new FileReader();
+  r.onload = ev => { state._dashImg = ev.target.result; dashRenderImg(); };
+  r.readAsDataURL(f);
+}
+function dashSetImageLink() {
+  const url = prompt('Dashboard image URL');
+  if (url && url.trim()) { state._dashImg = url.trim(); dashRenderImg(); }
+}
 function submitDashboard() {
   const title = document.getElementById('dashTitle').value.trim();
   if (!title) { toast('Title is required', 'danger'); return; }
-  const pub = document.getElementById('dashPublic').classList.contains('on');
+  const description = document.getElementById('dashDesc').value.trim();
+  const hideMobile = document.getElementById('dashHideMobile').classList.contains('on');
+  const mobileOrder = document.getElementById('dashOrder').value.trim();
+  const image = state._dashImg || '';
   const customers = Array.from(document.querySelectorAll('#dashCustList input:checked')).map(i => i.value);
   if (state.editingDashboardId) {
     const d = DASHBOARDS.find(x => x.id === state.editingDashboardId);
-    if (d) { d.title = title; d.public = pub; d.customers = customers; }
+    if (d) { d.title = title; d.description = description; d.hideMobile = hideMobile; d.mobileOrder = mobileOrder; d.image = image; d.customers = customers; }
     toast('Dashboard updated', 'success');
   } else {
     const now = new Date(); const pad = n => String(n).padStart(2, '0');
     const createdTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-    DASHBOARDS.unshift({ id: 'db-' + Date.now(), createdTime, title, customers, public: pub });
+    DASHBOARDS.unshift({ id: 'db-' + Date.now(), createdTime, title, description, customers, public: false, hideMobile, mobileOrder, image });
     toast('Dashboard created', 'success');
   }
   closeDashboardDrawer();
