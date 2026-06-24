@@ -2125,7 +2125,7 @@
 <!-- =========== SHARED SIDEBAR TEMPLATE (reused by JS) =========== -->
 
 <!-- USERS SCREEN -->
-<div class="screen active" id="screen-users">
+<div class="screen" id="screen-users">
   <div class="app">
     <aside class="sidebar" data-sidebar></aside>
     <div class="main">
@@ -2463,6 +2463,94 @@
     </div>
   </div>
 </div>
+
+<!-- DASHBOARD OVERVIEW SCREEN -->
+<div class="screen active" id="screen-dashboard">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <div class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="content" id="dashboardContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARDS SCREEN -->
+<div class="screen" id="screen-dashboards">
+  <div class="app">
+    <aside class="sidebar" data-sidebar></aside>
+    <div class="main">
+      <header class="topbar" data-topbar></header>
+      <div class="content">
+        <div class="page-head">
+          <div>
+            <div class="page-title">Dashboards <span id="dashboardsCount" style="color:var(--text-muted);font-weight:500;font-size:18px"></span></div>
+            <div class="page-sub">Visualize device telemetry and share views with your customers.</div>
+          </div>
+          <button class="btn btn-primary" onclick="addDashboard()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Add dashboard
+          </button>
+        </div>
+        <div class="panel">
+          <div class="toolbar">
+            <div class="search-box">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+              <input id="dashboardSearch" placeholder="Search dashboards…" oninput="renderDashboardsPage()" />
+            </div>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Created time</th>
+                  <th>Title</th>
+                  <th>Assigned to customers</th>
+                  <th>Public</th>
+                  <th style="width:210px"></th>
+                </tr>
+              </thead>
+              <tbody id="dashboardRows"></tbody>
+            </table>
+          </div>
+          <div class="tbl-footer">
+            <div id="dashboardListMeta">—</div>
+            <div class="pager">
+              <button disabled style="opacity:.4;cursor:default">&lsaquo;</button><button class="active">1</button><button disabled style="opacity:.4;cursor:default">&rsaquo;</button>
+            </div>
+            <div><select class="select-sm"><option>10 per page</option><option>25 per page</option><option>50 per page</option></select></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==== Dashboard drawer ==== -->
+<div class="drawer-backdrop" id="dashboardDrawerBackdrop" onclick="closeDashboardDrawer()"></div>
+<aside class="drawer" id="dashboardDrawer">
+  <div class="drawer-head">
+    <div>
+      <div class="drawer-title" id="dashboardDrawerTitle">Add dashboard</div>
+      <div class="drawer-sub">Create a dashboard and assign it to customers.</div>
+    </div>
+    <button class="icon-btn" title="Close" onclick="closeDashboardDrawer()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-section">
+      <div class="field"><label class="label">Title <span class="req">*</span></label><input class="input" id="dashTitle" placeholder="e.g. Plant Overview" /></div>
+      <div class="field"><label class="label">Assign to customers</label><div id="dashCustList" style="display:flex;flex-direction:column;gap:10px;border:1px solid var(--border);border-radius:8px;padding:12px 14px;max-height:260px;overflow:auto"></div><div class="hint">Assigned customers can view this dashboard.</div></div>
+    </div>
+    <div class="form-section">
+      <div class="form-section-title">Public</div>
+      <div class="field"><div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px"><div><div style="font-size:14px;font-weight:500">Public dashboard</div><div class="hint" style="margin-top:4px">Anyone with the link can view, without signing in.</div></div><div class="switch" id="dashPublic" onclick="this.classList.toggle('on')"></div></div></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button class="btn btn-ghost" onclick="closeDashboardDrawer()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitDashboard()" id="dashSubmitBtn">Create</button>
+  </div>
+</aside>
 
 <!-- GATEWAYS SCREEN -->
 <div class="screen" id="screen-gateways">
@@ -3276,6 +3364,7 @@ const SVG = {
 };
 
 const NAV = [
+  { key: 'dashboard', label: 'Dashboard', ico: li('gauge'), screen: 'dashboard' },
   { section: 'Administration' },
   { key: 'enterprises', label: 'Enterprises', ico: li('building-2'), screen: 'enterprises', adminOnly: true },
   { key: 'customers',   label: 'Clients',            ico: li('user-round'), screen: 'customers', hideInClientView: true },
@@ -3290,7 +3379,8 @@ const NAV = [
       { key: 'entityViews',    label: 'Entity views',    ico: li('layout-grid'),  comingSoon: true },
       { key: 'gateways',       label: 'Gateways',        ico: li('share-2'),      screen: 'gateways' }
     ]
-  }
+  },
+  { key: 'dashboards', label: 'Dashboards', ico: li('layout-dashboard'), screen: 'dashboards' }
 ];
 
 const RESOURCES = [
@@ -3351,7 +3441,7 @@ const initialIndustries = [
 ];
 
 const state = {
-  currentScreen: 'users',
+  currentScreen: 'dashboard',
   roles: JSON.parse(JSON.stringify(initialRoles)),
   industries: JSON.parse(JSON.stringify(initialIndustries)),
   selectedRoleId: 'dl-super',
@@ -3721,6 +3811,7 @@ try { if (localStorage.getItem('axiot-sidebar-collapsed') === '1') document.body
 function renderTopbar() {
   const unread = NOTIFS.filter(n => n.unread).length;
   const titles = {
+    dashboard: 'Dashboard',
     users: 'Users',
     roles: 'Roles & permissions',
     industries: 'Industries',
@@ -8605,6 +8696,208 @@ function renderGatewayDetails() {
   if (window.lucide) window.lucide.createIcons();
 }
 
+const DASHBOARDS = [
+  { id: 'db-1', createdTime: '2026-06-24 16:26:33', title: 'Test Dashboard',         customers: [],                                public: false },
+  { id: 'db-2', createdTime: '2026-05-29 21:30:09', title: 'Kadodara Nagar Palika',  customers: ['Arvind Mills'],                  public: false },
+  { id: 'db-3', createdTime: '2026-05-12 10:14:51', title: 'Plant Energy Overview',  customers: ['Dynamic Looms', 'Helio Energies'], public: true }
+];
+state.editingDashboardId = null;
+
+function dashStat(label, value, sub, icon, color) {
+  return `<div class="stat-card">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div class="stat-label">${label}</div>
+      <div style="width:30px;height:30px;border-radius:8px;background:var(--primary-soft);color:${color};display:grid;place-items:center">${li(icon)}</div>
+    </div>
+    <div class="stat-value">${value}</div>
+    <div class="stat-delta">${sub}</div>
+  </div>`;
+}
+function renderDashboard() {
+  const c = document.getElementById('dashboardContent');
+  if (!c) return;
+  let devs = DEVICES;
+  if (VIEW_CLIENT) devs = devs.filter(d => d.client === VIEW_CLIENT);
+  const gws = (typeof GATEWAYS !== 'undefined') ? GATEWAYS : [];
+  const total = devs.length;
+  const active = devs.filter(d => d.active !== false).length;
+  const inactive = total - active;
+  const gwActive = gws.filter(g => g.status === 'Active').length;
+  const profiles = (typeof DEVICE_PROFILES !== 'undefined') ? DEVICE_PROFILES.length : 0;
+  const openAlarms = gws.filter(g => g.status === 'Inactive').length + inactive;
+  const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+  const byInd = {};
+  devs.forEach(d => { const k = d.location || 'Unassigned'; byInd[k] = (byInd[k] || 0) + 1; });
+  const indRows = Object.keys(byInd).sort((a, b) => byInd[b] - byInd[a]).slice(0, 6);
+  const indMax = Math.max(1, ...indRows.map(k => byInd[k]));
+
+  c.innerHTML = `
+    <div class="page-head">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Fleet health and activity across your AXIoT workspace.</div>
+      </div>
+    </div>
+    <div class="stats">
+      ${dashStat('Total devices', total, `${active} active · ${inactive} inactive`, 'cpu', 'var(--primary)')}
+      ${dashStat('Gateways online', `${gwActive}/${gws.length}`, `${gws.length - gwActive} offline`, 'share-2', 'var(--success)')}
+      ${dashStat('Device profiles', profiles, 'reusable templates', 'layers', 'var(--primary)')}
+      ${dashStat('Open alarms', openAlarms, openAlarms ? 'needs attention' : 'all clear', 'triangle-alert', openAlarms ? 'var(--danger)' : 'var(--success)')}
+    </div>
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start">
+      <div class="panel" style="padding:18px 20px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Devices by industry</div>
+        <div class="hint" style="margin-bottom:16px">Where your fleet is deployed.</div>
+        ${indRows.length ? indRows.map(k => `
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>${_kvEscape(k)}</span><span style="color:var(--text-muted)">${byInd[k]}</span></div>
+            <div style="height:8px;background:var(--bg-hover);border-radius:6px;overflow:hidden"><div style="height:100%;width:${pct(byInd[k], indMax)}%;background:var(--primary);border-radius:6px"></div></div>
+          </div>`).join('') : '<div class="hint">No devices yet.</div>'}
+      </div>
+      <div class="panel" style="padding:18px 20px">
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px">Device status</div>
+        <div class="hint" style="margin-bottom:18px">Active vs inactive.</div>
+        <div style="display:flex;align-items:center;gap:20px">
+          <div style="position:relative;width:120px;height:120px;border-radius:50%;background:conic-gradient(var(--success) 0 ${pct(active, total)}%, var(--bg-hover) ${pct(active, total)}% 100%);display:grid;place-items:center;flex-shrink:0">
+            <div style="width:80px;height:80px;border-radius:50%;background:var(--surface);display:grid;place-items:center">
+              <div style="font-size:22px;font-weight:700;line-height:1">${pct(active, total)}%</div>
+            </div>
+          </div>
+          <div style="font-size:13px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:10px;height:10px;border-radius:3px;background:var(--success)"></span>Active <b style="margin-left:6px">${active}</b></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:3px;background:var(--bg-hover)"></span>Inactive <b style="margin-left:6px">${inactive}</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px;padding:18px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-weight:600;font-size:15px">Gateways</div>
+        <a style="color:var(--primary);font-size:13px;font-weight:500;cursor:pointer" onclick="switchScreen('gateways')">View all →</a>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Gateway</th><th>Status</th><th>Connectors</th><th>Version</th></tr></thead>
+        <tbody>${gws.slice(0, 5).map(g => `<tr>
+          <td><span class="cell-user-name">${_kvEscape(g.name)}</span></td>
+          <td>${g.status === 'Active' ? '<span class="chip chip-active"><span class="dot"></span>Active</span>' : '<span class="chip chip-inactive"><span class="dot"></span>Inactive</span>'}</td>
+          <td style="color:var(--text-muted)">${g.connectors || 0}</td>
+          <td style="color:var(--text-muted)">${_kvEscape(g.version || '—')}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>
+    </div>
+  `;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function renderDashboardsPage() {
+  const q = (document.getElementById('dashboardSearch') && document.getElementById('dashboardSearch').value || '').toLowerCase();
+  let list = DASHBOARDS;
+  if (VIEW_CLIENT) list = list.filter(d => (d.customers || []).includes(VIEW_CLIENT) || d.public);
+  if (q) list = list.filter(d => (d.title || '').toLowerCase().includes(q) || (d.customers || []).join(' ').toLowerCase().includes(q));
+  const cnt = document.getElementById('dashboardsCount'); if (cnt) cnt.textContent = `(${list.length})`;
+  const meta = document.getElementById('dashboardListMeta'); if (meta) meta.textContent = `${list.length} of ${DASHBOARDS.length} dashboards`;
+  const tbody = document.getElementById('dashboardRows'); if (!tbody) return;
+  if (!list.length) { tbody.innerHTML = `<tr><td colspan="5" style="padding:60px 22px;text-align:center;color:var(--text-muted)">No dashboards found</td></tr>`; return; }
+  tbody.innerHTML = list.map(d => `
+    <tr class="row-clickable" onclick="openDashboardDrawer('${d.id}')">
+      <td style="color:var(--text-muted)">${d.createdTime}</td>
+      <td><span class="cell-user-name">${_kvEscape(d.title)}</span></td>
+      <td style="color:var(--text-muted)">${(d.customers && d.customers.length) ? _kvEscape(d.customers.join(', ')) : '—'}</td>
+      <td onclick="event.stopPropagation()"><input type="checkbox" ${d.public ? 'checked' : ''} onchange="toggleDashboardPublic('${d.id}')" style="cursor:pointer" /></td>
+      <td onclick="event.stopPropagation()">
+        <div class="row-actions">
+          <button class="icon-btn" title="Export" onclick="exportDashboard('${d.id}')">${li('download')}</button>
+          <button class="icon-btn" title="Share public link" onclick="shareDashboard('${d.id}')">${li('share-2')}</button>
+          <button class="icon-btn" title="Unassign customers" onclick="unassignDashboard('${d.id}')">${li('corner-up-left')}</button>
+          <button class="icon-btn" title="Assign to customers" onclick="openDashboardDrawer('${d.id}')">${li('contact')}</button>
+          <button class="icon-btn" title="Edit" onclick="openDashboardDrawer('${d.id}')">${li('pencil')}</button>
+          <button class="icon-btn" title="Delete" onclick="deleteDashboard('${d.id}')" style="color:var(--danger)">${li('trash-2')}</button>
+        </div>
+      </td>
+    </tr>`).join('');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function addDashboard() { openDashboardDrawer(); }
+function openDashboardDrawer(id) {
+  state.editingDashboardId = id || null;
+  const d = id ? DASHBOARDS.find(x => x.id === id) : null;
+  document.getElementById('dashboardDrawerTitle').textContent = d ? 'Edit dashboard' : 'Add dashboard';
+  document.getElementById('dashSubmitBtn').textContent = d ? 'Save changes' : 'Create';
+  document.getElementById('dashTitle').value = d ? d.title : '';
+  document.getElementById('dashPublic').classList.toggle('on', d ? !!d.public : false);
+  const assigned = d ? (d.customers || []) : [];
+  const custs = (VIEW_CLIENT ? CUSTOMERS.filter(c => c.title === VIEW_CLIENT) : CUSTOMERS);
+  document.getElementById('dashCustList').innerHTML = custs.map(c => `
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px">
+      <input type="checkbox" value="${_kvEscape(c.title)}" ${assigned.includes(c.title) ? 'checked' : ''} />
+      <span>${_kvEscape(c.title)}</span>
+    </label>`).join('') || '<div class="hint">No customers available.</div>';
+  document.getElementById('dashboardDrawer').classList.add('open');
+  document.getElementById('dashboardDrawerBackdrop').classList.add('open');
+  setTimeout(() => document.getElementById('dashTitle').focus(), 250);
+}
+function closeDashboardDrawer() {
+  document.getElementById('dashboardDrawer').classList.remove('open');
+  document.getElementById('dashboardDrawerBackdrop').classList.remove('open');
+  state.editingDashboardId = null;
+}
+function submitDashboard() {
+  const title = document.getElementById('dashTitle').value.trim();
+  if (!title) { toast('Title is required', 'danger'); return; }
+  const pub = document.getElementById('dashPublic').classList.contains('on');
+  const customers = Array.from(document.querySelectorAll('#dashCustList input:checked')).map(i => i.value);
+  if (state.editingDashboardId) {
+    const d = DASHBOARDS.find(x => x.id === state.editingDashboardId);
+    if (d) { d.title = title; d.public = pub; d.customers = customers; }
+    toast('Dashboard updated', 'success');
+  } else {
+    const now = new Date(); const pad = n => String(n).padStart(2, '0');
+    const createdTime = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    DASHBOARDS.unshift({ id: 'db-' + Date.now(), createdTime, title, customers, public: pub });
+    toast('Dashboard created', 'success');
+  }
+  closeDashboardDrawer();
+  renderDashboardsPage();
+}
+function deleteDashboard(id) {
+  const d = DASHBOARDS.find(x => x.id === id); if (!d) return;
+  confirmDialog(`Delete dashboard "${d.title}"?`, 'This permanently removes the dashboard.', () => {
+    const i = DASHBOARDS.findIndex(x => x.id === id); if (i >= 0) DASHBOARDS.splice(i, 1);
+    renderDashboardsPage(); toast('Dashboard deleted', 'danger');
+  });
+}
+function toggleDashboardPublic(id) {
+  const d = DASHBOARDS.find(x => x.id === id); if (!d) return;
+  d.public = !d.public; renderDashboardsPage();
+  toast(d.public ? 'Dashboard is now public' : 'Dashboard is now private', 'success');
+}
+function shareDashboard(id) {
+  const d = DASHBOARDS.find(x => x.id === id); if (!d) return;
+  d.public = true; renderDashboardsPage();
+  const link = 'https://app.axiot.io/dashboard/' + id;
+  if (navigator.clipboard) navigator.clipboard.writeText(link).then(() => toast('Public link copied', 'success'));
+  else toast('Public link: ' + link, 'success');
+}
+function unassignDashboard(id) {
+  const d = DASHBOARDS.find(x => x.id === id); if (!d) return;
+  if (!d.customers || !d.customers.length) { toast('No customers assigned'); return; }
+  confirmDialog(`Unassign all customers from "${d.title}"?`, 'Customers will no longer see this dashboard.', () => {
+    d.customers = []; renderDashboardsPage(); toast('Customers unassigned', 'danger');
+  });
+}
+function exportDashboard(id) {
+  const d = DASHBOARDS.find(x => x.id === id); if (!d) return;
+  const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = (d.title || 'dashboard').toLowerCase().split(' ').join('-') + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Dashboard exported', 'success');
+}
+
 const ENTERPRISES = [
   { id: 'e-1', name: 'Dynamic Looms',      admin: 'priya@dynamiclooms.com', clients: 8, users: 14, created: '2026-01-12', active: true },
   { id: 'e-2', name: 'Arvind Group',       admin: 'marcus.chen@arvind.com', clients: 4, users: 9,  created: '2026-02-03', active: true },
@@ -8779,6 +9072,8 @@ function switchScreen(name) {
   if (name === 'customers')      renderCustomersPage();
   if (name === 'deviceProfiles') renderDeviceProfilesPage();
   if (name === 'gateways')       renderGatewaysPage();
+  if (name === 'dashboard')      renderDashboard();
+  if (name === 'dashboards')     renderDashboardsPage();
   if (name === 'enterprises')    renderEnterprisesPage();
   if (name === 'gatewayDetails') renderGatewayDetails();
   window.scrollTo(0, 0);
@@ -9952,6 +10247,7 @@ function toast(msg, type = '') {
 /* ============================================================
    Init
    ============================================================ */
+renderSidebar('dashboard');
 renderSidebar('users');
 renderSidebar('roles');
 renderSidebar('industries');
@@ -9959,6 +10255,7 @@ renderSidebar('devices');
 renderSidebar('customers');
 renderSidebar('deviceProfiles');
 renderSidebar('gateways');
+renderSidebar('dashboards');
 renderTopbar();
 renderUsers();
 fillEnterpriseSelects();
@@ -9968,6 +10265,8 @@ renderDevicesPage();
 renderCustomersPage();
 renderDeviceProfilesPage();
 renderGatewaysPage();
+renderDashboardsPage();
+renderDashboard();
 if (window.lucide) window.lucide.createIcons();
 
 /* Hover tooltip activation: convert titleâdata-tip on icon-only controls
