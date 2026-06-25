@@ -2482,12 +2482,6 @@
           </button>
         </div>
         <div class="panel">
-          <div class="toolbar">
-            <div class="search-box">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
-              <input id="dashboardSearch" placeholder="Search dashboards…" oninput="renderDashboardsPage()" />
-            </div>
-          </div>
           <div class="tbl-wrap">
             <table>
               <thead>
@@ -2530,6 +2524,44 @@
 .dashcv-addwidget svg{width:28px;height:28px}
 .dashcv-addwidget span{font-size:18px;font-weight:600}
 </style>
+<style>
+.wgt-drawer .drawer-head{flex-wrap:wrap;gap:12px;align-items:center}
+.wgt-title{font-size:18px;font-weight:700;letter-spacing:-.2px}
+.wgt-head-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wgt-search{min-width:200px;margin:0}
+.wgt-tabs{display:inline-flex;background:var(--bg-hover);border-radius:8px;padding:3px}
+.wgt-tabs button{border:none;background:none;padding:6px 14px;border-radius:6px;font-size:13px;font-weight:500;color:var(--text-muted);cursor:pointer}
+.wgt-tabs button.active{background:var(--primary);color:#fff}
+.wgt-body{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;align-content:start;overflow:auto;min-height:0}
+.wgt-card{border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--surface);transition:border-color .12s,box-shadow .12s}
+.wgt-card:hover{border-color:var(--primary);box-shadow:0 4px 16px rgba(16,24,40,.1)}
+.wgt-card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px}
+.wgt-card-name{font-size:14px;font-weight:600;line-height:1.25}
+.wgt-card-tags{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.wgt-sys{font-size:11px;font-weight:600;color:var(--text-muted);background:var(--bg-hover);border-radius:4px;padding:2px 7px}
+.wgt-info{width:22px;height:22px;border-radius:5px;background:var(--bg-hover);color:var(--text-muted);display:grid;place-items:center}
+.wgt-info svg{width:13px;height:13px}
+.wgt-preview{height:150px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;padding:12px}
+.wgt-preview svg{width:100%;height:100%;display:block}
+</style>
+<!-- Select widgets bundle drawer -->
+<div class="drawer-backdrop" id="widgetDrawerBackdrop" onclick="closeWidgetModal()"></div>
+<aside class="drawer wgt-drawer" id="widgetDrawer">
+  <div class="drawer-head">
+    <div class="wgt-title">Select widgets bundle</div>
+    <div class="wgt-head-actions">
+      <div class="search-box wgt-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input id="widgetSearch" placeholder="Search bundles…" oninput="renderWidgetBundles(this.value)" />
+      </div>
+      <button class="btn btn-secondary btn-sm"><i data-lucide="upload"></i> Import widget</button>
+      <div class="wgt-tabs"><button class="active">Widgets bundles</button><button>All widgets</button></div>
+      <button class="icon-btn" title="Close" onclick="closeWidgetModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>
+  </div>
+  <div class="drawer-body wgt-body" id="widgetBundlesGrid"></div>
+</aside>
+
 <!-- Dashboard editor canvas screen -->
 <div class="screen" id="screen-dashboardCanvas">
   <div class="app">
@@ -8842,6 +8874,83 @@ function renderDashboardsPage() {
   if (window.lucide) window.lucide.createIcons();
 }
 
+const WIDGET_BUNDLES = [
+  { name: 'Charts' }, { name: 'Cards' }, { name: 'Alarm widgets' }, { name: 'Tables' },
+  { name: 'Count widgets' }, { name: 'Maps' }, { name: 'Analogue gauges' }, { name: 'Digital gauges' },
+  { name: 'Buttons' }, { name: 'Control widgets' }, { name: 'Status indicators' }, { name: 'Input widgets' },
+  { name: 'Date' }, { name: 'Navigation widgets' }, { name: 'HTML widgets' }, { name: 'GPIO widgets' },
+  { name: 'Gateway widgets' }, { name: 'Edge widgets' }, { name: 'Entity widgets' }, { name: 'Entity admin widgets' },
+  { name: 'Home page widgets' }, { name: 'Industrial widgets' }, { name: 'Air quality' }, { name: 'Indoor Environment' },
+  { name: 'Outdoor Environment' }, { name: 'Liquid level' }, { name: 'SCADA symbols' }, { name: 'Traditional SCADA fluid system' },
+  { name: 'General high-performance SCADA' }, { name: 'High-performance SCADA oil & gas' },
+  { name: 'High-performance SCADA energy system' }, { name: 'High-performance SCADA fluid system' }
+];
+function widgetPreview(name) {
+  const P = {
+    'Charts': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="74" width="16" height="42" rx="2" fill="var(--primary)"/><rect x="40" y="58" width="16" height="58" rx="2" fill="var(--primary)"/><rect x="66" y="84" width="16" height="32" rx="2" fill="var(--primary)"/><rect x="92" y="48" width="16" height="68" rx="2" fill="var(--primary)"/><polyline points="22,52 48,36 74,46 100,28 126,42" fill="none" stroke="var(--warn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="178" cy="58" r="30" fill="none" stroke="var(--bg-hover)" stroke-width="9"/><path d="M178 28 a30 30 0 0 1 24 48" fill="none" stroke="var(--success)" stroke-width="9" stroke-linecap="round"/><path d="M202 76 a30 30 0 0 1 -42 -2" fill="none" stroke="var(--danger)" stroke-width="9" stroke-linecap="round"/></svg>`,
+    'Cards': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="12" width="96" height="54" rx="8" fill="var(--primary-soft)"/><text x="60" y="44" font-size="20" font-weight="700" fill="var(--primary)" text-anchor="middle" font-family="sans-serif">22°C</text><rect x="116" y="12" width="92" height="54" rx="8" fill="var(--bg-hover)"/><text x="162" y="40" font-size="18" font-weight="700" fill="var(--text)" text-anchor="middle" font-family="sans-serif">21</text><rect x="12" y="74" width="42" height="42" rx="4" fill="var(--text)"/><rect x="62" y="74" width="146" height="42" rx="6" fill="var(--surface)" stroke="var(--border)"/><line x1="74" y1="89" x2="160" y2="89" stroke="var(--border)"/><line x1="74" y1="103" x2="160" y2="103" stroke="var(--border)"/></svg>`,
+    'Alarm widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="12" width="38" height="38" rx="8" fill="var(--danger)"/><path d="M31 23 v9 M31 39 v.5" stroke="#fff" stroke-width="3" stroke-linecap="round"/><text x="60" y="26" font-size="10" fill="var(--text-muted)" font-family="sans-serif">Total</text><text x="60" y="47" font-size="22" font-weight="700" fill="var(--text)" font-family="sans-serif">3</text><line x1="12" y1="62" x2="208" y2="62" stroke="var(--border)"/><circle cx="20" cy="80" r="4" fill="var(--warn)"/><line x1="34" y1="80" x2="150" y2="80" stroke="var(--bg-hover)" stroke-width="6"/><circle cx="20" cy="98" r="4" fill="var(--danger)"/><line x1="34" y1="98" x2="150" y2="98" stroke="var(--bg-hover)" stroke-width="6"/><circle cx="20" cy="116" r="4" fill="var(--success)"/><line x1="34" y1="116" x2="150" y2="116" stroke="var(--bg-hover)" stroke-width="6"/></svg>`,
+    'Tables': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="12" width="196" height="22" rx="4" fill="var(--bg-hover)"/><line x1="80" y1="12" x2="80" y2="118" stroke="var(--border)"/><line x1="148" y1="12" x2="148" y2="118" stroke="var(--border)"/><line x1="12" y1="56" x2="208" y2="56" stroke="var(--border)"/><line x1="12" y1="78" x2="208" y2="78" stroke="var(--border)"/><line x1="12" y1="100" x2="208" y2="100" stroke="var(--border)"/><rect x="156" y="60" width="46" height="13" rx="2" fill="#9DBBE6"/><rect x="156" y="82" width="46" height="13" rx="2" fill="#F0A488"/><rect x="156" y="104" width="46" height="11" rx="2" fill="#9DBBE6"/></svg>`,
+    'Count widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="20" y="16" width="180" height="44" rx="8" fill="var(--surface)" stroke="var(--border)"/><rect x="32" y="28" width="20" height="20" rx="4" fill="var(--danger)"/><text x="64" y="44" font-size="20" font-weight="700" fill="var(--text)" font-family="sans-serif">3</text><rect x="20" y="70" width="180" height="44" rx="8" fill="var(--surface)" stroke="var(--border)"/><rect x="32" y="82" width="20" height="20" rx="4" fill="var(--warn)"/><text x="64" y="98" font-size="20" font-weight="700" fill="var(--text)" font-family="sans-serif">296</text></svg>`,
+    'Maps': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="12" width="196" height="106" rx="8" fill="#E8EEF4"/><path d="M12 60 q40 -20 90 0 t100 0" fill="none" stroke="#C4D2DF" stroke-width="3"/><path d="M60 12 v106 M150 12 v106" stroke="#C4D2DF" stroke-width="2"/><path d="M96 70 a14 14 0 1 1 28 0 c0 12 -14 26 -14 26 s-14 -14 -14 -26z" fill="var(--primary)"/><circle cx="110" cy="70" r="5" fill="#fff"/></svg>`,
+    'Analogue gauges': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><path d="M40 102 a60 60 0 0 1 140 0" fill="none" stroke="var(--bg-hover)" stroke-width="12" stroke-linecap="round"/><path d="M40 102 a60 60 0 0 1 66 -58" fill="none" stroke="var(--warn)" stroke-width="12" stroke-linecap="round"/><line x1="110" y1="102" x2="150" y2="66" stroke="var(--danger)" stroke-width="3" stroke-linecap="round"/><circle cx="110" cy="102" r="6" fill="var(--text)"/><text x="110" y="124" font-size="12" font-weight="700" fill="var(--text)" text-anchor="middle" font-family="sans-serif">034</text></svg>`,
+    'Digital gauges': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="36" y="36" width="148" height="58" rx="8" fill="#0B1220"/><text x="110" y="78" font-size="32" font-weight="800" fill="var(--success)" text-anchor="middle" font-family="monospace">76.25</text></svg>`,
+    'Buttons': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="24" y="22" width="172" height="36" rx="8" fill="none" stroke="var(--primary)" stroke-width="2"/><text x="110" y="45" font-size="15" font-weight="600" fill="var(--primary)" text-anchor="middle" font-family="sans-serif">Button</text><rect x="24" y="72" width="172" height="36" rx="8" fill="none" stroke="var(--primary)" stroke-width="2"/><text x="110" y="95" font-size="15" font-weight="600" fill="var(--primary)" text-anchor="middle" font-family="sans-serif">Send</text></svg>`,
+    'Control widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><circle cx="68" cy="65" r="42" fill="none" stroke="var(--bg-hover)" stroke-width="8"/><path d="M68 23 a42 42 0 0 1 36 63" fill="none" stroke="var(--warn)" stroke-width="8" stroke-linecap="round"/><circle cx="68" cy="65" r="22" fill="var(--text)"/><text x="68" y="70" font-size="11" font-weight="700" fill="#fff" text-anchor="middle" font-family="sans-serif">50.0</text><circle cx="164" cy="65" r="34" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/><line x1="164" y1="65" x2="164" y2="40" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/></svg>`,
+    'Status indicators': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="42" y="34" width="58" height="60" rx="6" fill="none" stroke="var(--text-muted)" stroke-width="3"/><rect x="60" y="28" width="22" height="8" rx="2" fill="var(--text-muted)"/><rect x="48" y="46" width="46" height="42" rx="3" fill="var(--success)"/><rect x="120" y="34" width="58" height="60" rx="6" fill="none" stroke="var(--text-muted)" stroke-width="3"/><rect x="138" y="28" width="22" height="8" rx="2" fill="var(--text-muted)"/><rect x="126" y="46" width="46" height="42" rx="3" fill="var(--success)"/><text x="71" y="112" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-family="sans-serif">100%</text><text x="149" y="112" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-family="sans-serif">100%</text></svg>`,
+    'Input widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="30" y="28" width="160" height="28" rx="6" fill="var(--surface)" stroke="var(--border)"/><rect x="40" y="38" width="70" height="8" rx="4" fill="var(--bg-hover)"/><line x1="30" y1="88" x2="190" y2="88" stroke="var(--bg-hover)" stroke-width="6" stroke-linecap="round"/><line x1="30" y1="88" x2="120" y2="88" stroke="var(--primary)" stroke-width="6" stroke-linecap="round"/><circle cx="120" cy="88" r="10" fill="var(--primary)"/></svg>`,
+    'Date': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="56" y="24" width="108" height="84" rx="8" fill="var(--surface)" stroke="var(--border)" stroke-width="2"/><rect x="56" y="24" width="108" height="22" rx="8" fill="var(--primary)"/><g fill="var(--text-muted)"><rect x="68" y="56" width="12" height="10" rx="2"/><rect x="88" y="56" width="12" height="10" rx="2"/><rect x="108" y="56" width="12" height="10" rx="2"/><rect x="128" y="56" width="12" height="10" rx="2"/><rect x="68" y="74" width="12" height="10" rx="2"/><rect x="88" y="74" width="12" height="10" rx="2" fill="var(--primary)"/><rect x="108" y="74" width="12" height="10" rx="2"/><rect x="128" y="74" width="12" height="10" rx="2"/></g></svg>`,
+    'Navigation widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="30" y="20" width="160" height="40" rx="8" fill="var(--primary)"/><text x="110" y="45" font-size="14" font-weight="600" fill="#fff" text-anchor="middle" font-family="sans-serif">Devices</text><rect x="30" y="68" width="76" height="44" rx="8" fill="var(--primary)" opacity="0.85"/><rect x="114" y="68" width="76" height="44" rx="8" fill="var(--primary)" opacity="0.85"/><text x="68" y="94" font-size="11" font-weight="600" fill="#fff" text-anchor="middle" font-family="sans-serif">Rules</text><text x="152" y="94" font-size="11" font-weight="600" fill="#fff" text-anchor="middle" font-family="sans-serif">Clients</text></svg>`,
+    'HTML widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="30" y="20" width="160" height="56" rx="6" fill="#0B1220"/><g font-family="monospace" font-size="9" fill="#8FB4E8"><text x="40" y="36">### Markdown</text><text x="40" y="50">**bold** text</text><text x="40" y="64">[link](url)</text></g><rect x="30" y="86" width="74" height="28" rx="5" fill="var(--surface)" stroke="var(--border)"/><text x="67" y="104" font-size="14" font-weight="700" fill="var(--text)" text-anchor="middle" font-family="sans-serif">2.44</text><rect x="114" y="86" width="76" height="28" rx="5" fill="var(--surface)" stroke="var(--border)"/><text x="152" y="104" font-size="11" fill="var(--text-muted)" text-anchor="middle" font-family="monospace">&lt;/&gt;</text></svg>`,
+    'GPIO widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="56" y="22" width="108" height="40" rx="6" fill="var(--danger)"/><circle cx="78" cy="42" r="8" fill="#2FAE4B"/><circle cx="142" cy="42" r="8" fill="#E8C20A"/><rect x="56" y="72" width="108" height="40" rx="6" fill="var(--danger)"/><circle cx="78" cy="92" r="8" fill="#9DA7B3"/><circle cx="142" cy="92" r="8" fill="#9DA7B3"/><g font-size="9" fill="var(--text-muted)" font-family="sans-serif"><text x="30" y="38">G1</text><text x="172" y="38">G2</text><text x="30" y="88">G3</text><text x="172" y="88">G4</text></g></svg>`,
+    'Gateway widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="24" y="18" width="172" height="26" rx="5" fill="var(--surface)" stroke="var(--border)"/><text x="34" y="35" font-size="9" fill="var(--text-muted)" font-family="sans-serif">THINGSBOARD</text><path d="M188 26 l-5 6 l-5 -6" fill="none" stroke="var(--text-muted)" stroke-width="1.5"/><rect x="24" y="54" width="172" height="58" rx="5" fill="var(--surface)" stroke="var(--border)"/><g font-size="9" font-family="sans-serif"><text x="34" y="72" fill="var(--success)">INFO</text><text x="90" y="72" fill="var(--text-muted)">SUCCESS</text><text x="34" y="90" fill="var(--warn)">DEBUG</text><text x="90" y="90" fill="var(--text-muted)">data: {}</text><text x="34" y="106" fill="var(--danger)">ERROR</text></g></svg>`,
+    'Edge widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="14" width="192" height="102" rx="8" fill="var(--surface)" stroke="var(--border)"/><rect x="26" y="26" width="14" height="11" rx="2" fill="var(--primary)"/><text x="48" y="36" font-size="10" fill="var(--text)" font-family="sans-serif">Edge #1 Overview</text><line x1="34" y1="50" x2="34" y2="102" stroke="var(--text-muted)" stroke-width="1.2"/><g fill="var(--text-muted)" font-size="9" font-family="sans-serif"><text x="56" y="58">Assets</text><text x="56" y="72">Devices</text><text x="56" y="86">Entity Views</text><text x="56" y="100">Dashboards</text></g></svg>`,
+    'Entity widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><circle cx="26" cy="24" r="4" fill="var(--primary)"/><text x="36" y="28" font-size="10" fill="var(--text)" font-family="sans-serif">Customer A</text><rect x="48" y="38" width="9" height="8" rx="2" fill="var(--text-muted)"/><text x="62" y="45" font-size="9" fill="var(--text-muted)" font-family="sans-serif">Device WM452</text><rect x="48" y="52" width="9" height="8" rx="2" fill="var(--text-muted)"/><text x="62" y="59" font-size="9" fill="var(--text-muted)" font-family="sans-serif">Device KL514</text><line x1="14" y1="72" x2="206" y2="72" stroke="var(--border)"/><line x1="14" y1="94" x2="206" y2="94" stroke="var(--border)"/><g font-size="9" fill="var(--text-muted)" font-family="sans-serif"><text x="20" y="86">WM452</text><text x="100" y="86">Device</text><text x="170" y="86">89.5</text></g></svg>`,
+    'Entity admin widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="16" width="192" height="98" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="26" y="34" font-size="10" font-weight="600" fill="var(--text)" font-family="sans-serif">Asset admin table</text><path d="M188 26 v10 M183 31 h10" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"/><line x1="14" y1="44" x2="206" y2="44" stroke="var(--border)"/><line x1="14" y1="66" x2="206" y2="66" stroke="var(--border)"/><line x1="14" y1="88" x2="206" y2="88" stroke="var(--border)"/><g font-size="9" fill="var(--text-muted)" font-family="sans-serif"><text x="24" y="60">WM452</text><text x="100" y="60">Device</text><text x="24" y="82">KL514</text><text x="100" y="82">Device</text></g></svg>`,
+    'Home page widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="14" width="192" height="102" rx="8" fill="var(--surface)" stroke="var(--border)"/><text x="26" y="34" font-size="10" font-weight="600" fill="var(--text-muted)" font-family="sans-serif">Get started</text><circle cx="30" cy="50" r="8" fill="var(--primary-soft)"/><text x="30" y="53" font-size="8" fill="var(--primary)" text-anchor="middle" font-family="sans-serif">1</text><text x="46" y="53" font-size="9" fill="var(--text)" font-family="sans-serif">Create device</text><circle cx="30" cy="70" r="8" fill="var(--primary-soft)"/><text x="30" y="73" font-size="8" fill="var(--primary)" text-anchor="middle" font-family="sans-serif">2</text><text x="46" y="73" font-size="9" fill="var(--text)" font-family="sans-serif">Connect device</text><circle cx="30" cy="90" r="8" fill="var(--primary)"/><text x="30" y="93" font-size="8" fill="#fff" text-anchor="middle" font-family="sans-serif">3</text><text x="46" y="93" font-size="9" fill="var(--text)" font-family="sans-serif">Create dashboard</text></svg>`,
+    'Industrial widgets': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="14" width="192" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="26" y="34" font-size="9" fill="var(--text-muted)" font-family="sans-serif">Efficiency</text><text x="26" y="54" font-size="18" font-weight="700" fill="var(--success)" font-family="sans-serif">70%</text><polyline points="120,48 140,40 160,44 180,30 198,24" fill="none" stroke="var(--text)" stroke-width="2"/><path d="M14 110 L46 86 L78 96 L110 72 L142 92 L174 78 L206 92 L206 116 L14 116 Z" fill="var(--success)" opacity="0.5"/><polyline points="14,86 46,68 78,82 110,58" fill="none" stroke="var(--warn)" stroke-width="2"/></svg>`,
+    'Air quality': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="14" y="14" width="192" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="26" y="32" font-size="9" fill="var(--text-muted)" font-family="sans-serif">CO2 level</text><text x="26" y="54" font-size="20" font-weight="700" fill="var(--success)" font-family="sans-serif">400 ppm</text><rect x="14" y="70" width="192" height="46" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="26" y="88" font-size="9" fill="var(--text-muted)" font-family="sans-serif">PM2.5</text><text x="26" y="108" font-size="18" font-weight="700" fill="var(--warn)" font-family="sans-serif">30</text><polyline points="120,108 140,100 160,104 180,96 198,100" fill="none" stroke="var(--text)" stroke-width="2"/></svg>`,
+    'Indoor Environment': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="14" width="92" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="20" y="30" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Radon level</text><text x="20" y="50" font-size="17" font-weight="700" fill="var(--warn)" font-family="sans-serif">150</text><rect x="116" y="14" width="92" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="124" y="30" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Temperature</text><text x="124" y="50" font-size="17" font-weight="700" fill="var(--primary)" font-family="sans-serif">17°C</text><rect x="12" y="70" width="92" height="46" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="20" y="86" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Humidity</text><text x="20" y="105" font-size="15" font-weight="700" fill="var(--success)" font-family="sans-serif">45%</text><rect x="116" y="70" width="92" height="46" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="124" y="86" font-size="8" fill="var(--text-muted)" font-family="sans-serif">VOCs</text><text x="124" y="105" font-size="13" font-weight="700" fill="var(--danger)" font-family="sans-serif">1100</text></svg>`,
+    'Outdoor Environment': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="12" y="14" width="92" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="20" y="30" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Temperature</text><text x="20" y="50" font-size="17" font-weight="700" fill="var(--primary)" font-family="sans-serif">-20°C</text><rect x="116" y="14" width="92" height="48" rx="6" fill="var(--surface)" stroke="var(--border)"/><text x="124" y="30" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Humidity</text><text x="124" y="50" font-size="17" font-weight="700" fill="var(--warn)" font-family="sans-serif">35</text><circle cx="58" cy="93" r="19" fill="none" stroke="var(--border)" stroke-width="2"/><line x1="58" y1="93" x2="69" y2="82" stroke="var(--danger)" stroke-width="2"/><text x="58" y="96" font-size="8" fill="var(--text)" text-anchor="middle" font-family="sans-serif">8.1</text><text x="124" y="86" font-size="8" fill="var(--text-muted)" font-family="sans-serif">Pressure</text><text x="124" y="105" font-size="13" font-weight="700" fill="var(--success)" font-family="sans-serif">1010</text></svg>`,
+    'Liquid level': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="22" y="18" width="40" height="44" rx="4" fill="var(--surface)" stroke="var(--text-muted)"/><rect x="22" y="42" width="40" height="20" fill="#9DBBE6"/><rect x="120" y="18" width="46" height="44" rx="14" fill="var(--surface)" stroke="var(--text-muted)"/><rect x="120" y="42" width="46" height="20" fill="#9DBBE6"/><rect x="22" y="76" width="40" height="44" rx="4" fill="var(--surface)" stroke="var(--text-muted)"/><rect x="22" y="100" width="40" height="20" fill="#9DBBE6"/><ellipse cx="143" cy="98" rx="24" ry="22" fill="var(--surface)" stroke="var(--text-muted)"/><path d="M119 98 a24 22 0 0 0 48 0 z" fill="#9DBBE6"/></svg>`,
+    'SCADA symbols': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><path d="M110 20 l48 27 v36 l-48 27 l-48 -27 v-36z" fill="none" stroke="var(--primary)" stroke-width="4" stroke-linejoin="round"/><path d="M90 56 h40 M90 74 h40 M110 56 v18" stroke="var(--primary)" stroke-width="3"/></svg>`,
+    'Traditional SCADA fluid system': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="26" y="40" width="72" height="52" rx="10" fill="#DCE6F0" stroke="var(--text-muted)" stroke-width="2"/><rect x="26" y="68" width="72" height="24" fill="#9DBBE6"/><rect x="98" y="74" width="52" height="8" fill="#7FA8D8"/><rect x="146" y="74" width="8" height="34" fill="#7FA8D8"/><circle cx="178" cy="78" r="20" fill="none" stroke="var(--success)" stroke-width="6"/><path d="M178 64 v28 M164 78 h28" stroke="var(--success)" stroke-width="4"/></svg>`,
+    'General high-performance SCADA': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="24" y="16" width="16" height="96" rx="3" fill="var(--bg-hover)"/><rect x="24" y="60" width="16" height="52" rx="3" fill="#9DBBE6"/><text x="50" y="70" font-size="16" font-weight="700" fill="var(--primary)" font-family="sans-serif">26</text><rect x="110" y="22" width="96" height="30" rx="5" fill="var(--surface)" stroke="var(--border)"/><text x="158" y="42" font-size="10" fill="var(--text)" text-anchor="middle" font-family="sans-serif">Heat pump</text><path d="M120 72 h70 v34 h-70 z" fill="none" stroke="var(--text-muted)" stroke-width="2"/><path d="M134 106 v-12 M170 72 v12" stroke="var(--text-muted)" stroke-width="2"/></svg>`,
+    'High-performance SCADA oil & gas': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><g stroke="var(--text-muted)" stroke-width="2" fill="none"><path d="M64 112 L88 26 L112 112 Z"/><path d="M72 84 L104 84 M78 58 L98 58"/><line x1="88" y1="26" x2="88" y2="14"/></g><circle cx="160" cy="50" r="13" fill="none" stroke="var(--text-muted)" stroke-width="2"/><circle cx="160" cy="92" r="16" fill="none" stroke="var(--text-muted)" stroke-width="2"/><line x1="160" y1="63" x2="160" y2="76" stroke="var(--text-muted)" stroke-width="2"/></svg>`,
+    'High-performance SCADA energy system': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><g stroke="var(--text-muted)" stroke-width="2" fill="none"><line x1="56" y1="112" x2="56" y2="56"/><path d="M56 56 l0 -22 M56 56 l19 11 M56 56 l-19 11"/><line x1="92" y1="112" x2="92" y2="48"/><path d="M92 48 l0 -22 M92 48 l19 11 M92 48 l-19 11"/></g><rect x="150" y="42" width="50" height="56" rx="4" fill="none" stroke="var(--text-muted)" stroke-width="2"/><path d="M158 32 v10 M192 32 v10" stroke="var(--text-muted)" stroke-width="2"/><path d="M168 60 l-6 12 h10 l-6 12" fill="none" stroke="var(--warn)" stroke-width="2"/></svg>`,
+    'High-performance SCADA fluid system': `<svg viewBox="0 0 220 130" preserveAspectRatio="xMidYMid meet"><rect x="16" y="20" width="56" height="44" rx="4" fill="#DCE6F0" stroke="var(--text-muted)"/><rect x="16" y="44" width="56" height="20" fill="#9DBBE6"/><circle cx="58" cy="98" r="22" fill="none" stroke="var(--text-muted)" stroke-width="2"/><circle cx="58" cy="98" r="6" fill="var(--text-muted)"/><circle cx="152" cy="92" r="26" fill="none" stroke="var(--text-muted)" stroke-width="2"/><circle cx="152" cy="92" r="7" fill="var(--text-muted)"/><rect x="100" y="30" width="40" height="26" rx="3" fill="var(--surface)" stroke="var(--border)"/></svg>`
+  };
+  return P[name] || li('layout-grid');
+}
+function renderWidgetBundles(q) {
+  const grid = document.getElementById('widgetBundlesGrid');
+  if (!grid) return;
+  const ql = (q || '').toLowerCase();
+  const list = WIDGET_BUNDLES.filter(b => b.name.toLowerCase().includes(ql));
+  grid.innerHTML = list.length ? list.map(b => `
+    <div class="wgt-card" onclick="selectWidgetBundle('${_kvEscape(b.name)}')">
+      <div class="wgt-card-head">
+        <div class="wgt-card-name">${_kvEscape(b.name)}</div>
+        <div class="wgt-card-tags"><span class="wgt-sys">sys</span><span class="wgt-info">${li('info')}</span></div>
+      </div>
+      <div class="wgt-preview">${widgetPreview(b.name)}</div>
+    </div>`).join('') : '<div class="hint" style="grid-column:1 / -1;padding:30px;text-align:center">No bundles found</div>';
+  if (window.lucide) window.lucide.createIcons();
+}
+function openWidgetModal() {
+  const inp = document.getElementById('widgetSearch'); if (inp) inp.value = '';
+  renderWidgetBundles('');
+  document.getElementById('widgetDrawerBackdrop').classList.add('open');
+  document.getElementById('widgetDrawer').classList.add('open');
+}
+function closeWidgetModal() {
+  document.getElementById('widgetDrawerBackdrop').classList.remove('open');
+  document.getElementById('widgetDrawer').classList.remove('open');
+}
+function selectWidgetBundle(name) {
+  closeWidgetModal();
+  toast(name + ' — widget library not available in this prototype', 'success');
+}
 function renderDashboardCanvas() {
   const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
   const c = document.getElementById('dashCanvasContent');
@@ -8854,11 +8963,6 @@ function renderDashboardCanvas() {
       </div>
       <div class="dashcv-bar-right">
         <button class="btn btn-primary btn-sm" onclick="dashCanvasAddWidget()">${li('plus')} Add widget</button>
-        <button class="icon-btn" title="Time window">${li('clock')}</button>
-        <button class="icon-btn" title="Settings">${li('settings')}</button>
-        <button class="icon-btn" title="Manage layouts">${li('monitor-smartphone')}</button>
-        <button class="icon-btn" title="Filters">${li('list-filter')}</button>
-        <button class="icon-btn" title="Version history">${li('history')}</button>
         <div class="dashcv-sep"></div>
         <button class="btn btn-ghost btn-sm" onclick="switchScreen('dashboards')">Cancel</button>
         <button class="btn btn-primary btn-sm" onclick="saveDashboardCanvas()">${li('check')} Save</button>
@@ -8894,7 +8998,7 @@ function saveDashboardCanvas() {
   toast('Dashboard saved', 'success');
 }
 function dashCanvasAddWidget() {
-  toast('Widget library — not available in this prototype', 'success');
+  openWidgetModal();
 }
 function addDashboard() { openDashboardDrawer(); }
 function openDashboardDrawer(id) {
