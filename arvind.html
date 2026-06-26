@@ -2594,6 +2594,16 @@
 .wcfg-chip{padding:7px 14px;border-radius:999px;background:var(--bg-hover);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .wcfg-chip.on{background:#34465f;color:#fff}
 .wcfg-chip.on::before{content:'\2713';font-size:11px;font-weight:700}
+.wcfg-combo{position:relative;width:100%}
+.wcfg-combo-input{width:100%;padding-right:36px}
+.wcfg-combo-arrow{position:absolute;right:12px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text-muted);display:flex}
+.wcfg-combo-arrow svg{width:16px;height:16px}
+.wcfg-combo-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:210px;overflow:auto;z-index:60;display:none}
+.wcfg-combo-list.open{display:block}
+.wcfg-combo-opt{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--text)}
+.wcfg-combo-opt:hover{background:var(--bg-hover)}
+.wcfg-combo-opt.hidden{display:none}
+.wcfg-combo-empty{padding:10px 12px;font-size:13px;color:var(--text-muted)}
 .wcfg-foot{display:flex;align-items:center;justify-content:space-between;width:100%}
 #wgtFooter{justify-content:flex-start}
 </style>
@@ -9202,6 +9212,24 @@ function wcfgAddRow(btn, html) {
 function wcfgAddSeries(btn) { wcfgAddRow(btn, _seriesRowHTML()); }
 function wcfgAddYAxis(btn) { wcfgAddRow(btn, _yaxisRowHTML()); }
 function wcfgDelRow(el) { const r = el.closest('.wcfg-tr'); if (r) r.remove(); }
+function wcfgComboOpen(input) { const l = input.parentNode.querySelector('.wcfg-combo-list'); if (l) l.classList.add('open'); }
+function wcfgComboFilter(input) {
+  const q = input.value.toLowerCase();
+  const list = input.parentNode.querySelector('.wcfg-combo-list');
+  if (!list) return;
+  list.classList.add('open');
+  let any = false;
+  list.querySelectorAll('.wcfg-combo-opt').forEach(o => { const m = o.textContent.toLowerCase().includes(q); o.classList.toggle('hidden', !m); if (m) any = true; });
+  let empty = list.querySelector('.wcfg-combo-empty');
+  if (!any) { if (!empty) { empty = document.createElement('div'); empty.className = 'wcfg-combo-empty'; empty.textContent = 'No matches'; list.appendChild(empty); } empty.style.display = 'block'; }
+  else if (empty) empty.style.display = 'none';
+}
+function wcfgComboPick(el) {
+  const combo = el.closest('.wcfg-combo');
+  combo.querySelector('.wcfg-combo-input').value = el.textContent;
+  combo.querySelectorAll('.wcfg-combo-opt').forEach(o => o.classList.remove('hidden'));
+  combo.querySelector('.wcfg-combo-list').classList.remove('open');
+}
 let _colorTarget = null;
 function _swatchHex(sw) {
   const bg = sw.style.background || sw.style.backgroundColor || '';
@@ -9259,7 +9287,20 @@ function renderWidgetConfig() {
   body.innerHTML = `
     <div class="wcfg-section">
       <div class="wcfg-card">
-        <div class="wcfg-card-title">Datasource</div><select class="input"><option value="" disabled selected>Device *</option><option>Gateway-01</option><option>Sensor-A12</option></select></div>
+        <div class="wcfg-card-title">Datasource</div><div class="wcfg-combo">
+          <input class="wcfg-in wcfg-combo-input" placeholder="Device *" autocomplete="off" spellcheck="false" oninput="wcfgComboFilter(this)" onfocus="wcfgComboOpen(this)">
+          <span class="wcfg-combo-arrow">${li('chevron-down')}</span>
+          <div class="wcfg-combo-list">
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Platform Gateway GW-DL01</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Monitoring Server MS-01</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Compressor #4</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Valve Cluster V12</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Conveyor Motor M3</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Temperature Sensor TS-A7</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Gateway-01</div>
+            <div class="wcfg-combo-opt" onclick="wcfgComboPick(this)">Sensor-A12</div>
+          </div>
+        </div></div>
     </div>
 
     <div class="wcfg-section">
@@ -11016,6 +11057,7 @@ _tipObs.observe(document.body, { childList: true, subtree: true });
 document.addEventListener('click', function (e) {
   const sw = e.target.closest ? e.target.closest('.wcfg-swatch') : null;
   if (sw) openColorPicker(sw, e);
+  if (!(e.target.closest && e.target.closest('.wcfg-combo'))) document.querySelectorAll('.wcfg-combo-list.open').forEach(l => l.classList.remove('open'));
 });
 
 document.addEventListener('keydown', e => {
