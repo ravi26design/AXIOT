@@ -2571,6 +2571,10 @@
 .wcfg-line{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:9px;padding:11px 14px;margin-bottom:10px}
 .wcfg-line:last-child{margin-bottom:0}
 .wcfg-line .lbl{font-size:14px;min-width:78px;color:var(--text)}
+.wcfg-chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.wcfg-chip{padding:7px 14px;border-radius:999px;background:var(--bg-hover);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.wcfg-chip.on{background:#34465f;color:#fff}
+.wcfg-chip.on::before{content:'\2713';font-size:11px;font-weight:700}
 .wcfg-foot{display:flex;align-items:center;justify-content:space-between;width:100%}
 #wgtFooter{justify-content:flex-start}
 </style>
@@ -9127,6 +9131,8 @@ function wcfgAdd() {
   toast('Added "' + name + '" widget', 'success');
 }
 function wcfgToggle(el) { el.classList.toggle('on'); }
+function wcfgChip(el) { el.classList.toggle('on'); }
+function wcfgPick(el) { Array.from(el.parentNode.children).forEach(c => c.classList.remove('on')); el.classList.add('on'); }
 function wcfgSeg(el) {
   Array.from(el.parentNode.children).forEach(b => b.classList.remove('active'));
   el.classList.add('active');
@@ -9189,6 +9195,33 @@ function renderWidgetConfig() {
         <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show ticks</span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
         <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show line</span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
         <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Show split lines</span><span style="display:inline-flex;color:var(--text-subtle)" title="Show grid split lines">${li('info')}</span><span style="flex:1"></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px;opacity:.5"></span></div>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Legend</span><span style="display:inline-flex;color:var(--text-muted)">${li('chevron-up')}</span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Label</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:#4a4a4a"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Value</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:#111"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Column title</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Position</span><select class="wcfg-in" style="width:150px"><option>Top</option><option>Bottom</option><option>Left</option><option>Right</option></select></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:0 0 auto">Show values</span><div class="wcfg-chips" style="flex:1"><span class="wcfg-chip" onclick="wcfgChip(this)">Min</span><span class="wcfg-chip" onclick="wcfgChip(this)">Max</span><span class="wcfg-chip on" onclick="wcfgChip(this)">Average</span><span class="wcfg-chip" onclick="wcfgChip(this)">Total</span><span class="wcfg-chip" onclick="wcfgChip(this)">Latest</span></div></div>
+      </div>
+      <div class="wcfg-line" style="border:none;padding:12px 2px 0;margin:0"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Sort datakeys in legend</span></div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Tooltip</span><span style="display:inline-flex;color:var(--text-muted)">${li('chevron-up')}</span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Trigger</span><div class="wcfg-chips"><span class="wcfg-chip" onclick="wcfgPick(this)">Point</span><span class="wcfg-chip on" onclick="wcfgPick(this)">Axis</span></div></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Label</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:#4a4a4a"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Value</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:#4a4a4a"></span></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Date</span><select class="wcfg-in" style="flex:1"><option>Auto</option><option>Date</option><option>Time</option></select><span class="wcfg-ico">${li('pencil')}</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:#4a4a4a"></span></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show date time interval</span><span style="display:inline-flex;color:var(--text-subtle)" title="Show the selected date-time interval">${li('info')}</span></div>
+        <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Hide zero values</span></div>
+        <div class="wcfg-line" style="opacity:.5"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show total value in stack mode</span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Background color</span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Background blur</span><input class="wcfg-in" style="width:70px" type="number" value="4"><span style="color:var(--text-muted);font-size:13px">px</span></div>
       </div>
     </div>
 
