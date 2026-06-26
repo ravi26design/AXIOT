@@ -2557,10 +2557,14 @@
 .wcfg-sec-head h4{font-size:15px;font-weight:600;margin:0;color:var(--text)}
 .wcfg-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--surface)}
 .wcfg-card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px}
+.color-pop{position:fixed;z-index:300;display:none;background:var(--surface);border:1px solid var(--border-strong);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);padding:10px;width:184px}
+.color-pop input[type=color]{width:100%;height:40px;border:1px solid var(--border);border-radius:5px;background:none;cursor:pointer;padding:2px}
+.color-pop-hex{display:flex;align-items:center;gap:5px;margin-top:8px;border:1px solid var(--border-strong);border-radius:5px;padding:7px 9px;font-size:13px;color:var(--text-muted)}
+.color-pop-hex input{border:none;outline:none;width:100%;font-size:13px;letter-spacing:.5px;text-transform:uppercase;background:transparent;color:var(--text)}
 .wcfg-scroll{overflow-x:auto}
 .wcfg-th{display:flex;gap:8px;padding:0 2px 9px;font-size:12px;color:var(--text-muted);font-weight:500}
 .wcfg-tr{display:flex;gap:8px;align-items:center;padding-top:11px;border-top:1px solid var(--border)}
-.wcfg-in{padding:7px 9px;background:var(--surface);border:1px solid var(--border-strong);border-radius:5px;font-size:13px;outline:none;color:var(--text)}
+.wcfg-in{padding:7px 9px;background:var(--surface);border:1px solid var(--border-strong);border-radius:5px;font-size:13px;outline:none;color:var(--text);box-sizing:border-box}
 .wcfg-in:focus{border-color:var(--primary)}
 .wcfg-empty{text-align:center;color:var(--text-muted);padding:24px;font-size:13px}
 .wcfg-swatch{height:28px;border-radius:5px;border:1px solid var(--border);flex-shrink:0;cursor:pointer}
@@ -9133,6 +9137,51 @@ function wcfgAdd() {
 function wcfgToggle(el) { el.classList.toggle('on'); }
 function wcfgChip(el) { el.classList.toggle('on'); }
 function wcfgPick(el) { Array.from(el.parentNode.children).forEach(c => c.classList.remove('on')); el.classList.add('on'); }
+let _colorTarget = null;
+function _swatchHex(sw) {
+  const bg = sw.style.background || sw.style.backgroundColor || '';
+  let m = bg.match(/#([0-9a-fA-F]{6})/);
+  if (m) return '#' + m[1].toLowerCase();
+  m = bg.match(/#([0-9a-fA-F]{3})\b/);
+  if (m) return '#' + m[1].split('').map(c => c + c).join('').toLowerCase();
+  const rgb = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (rgb) return '#' + [1,2,3].map(i => (+rgb[i]).toString(16).padStart(2,'0')).join('');
+  return '#3b82f6';
+}
+function _applyColor(hex) {
+  hex = hex.toLowerCase();
+  if (_colorTarget) { _colorTarget.style.background = hex; _colorTarget.style.borderColor = 'var(--border)'; }
+  const hx = document.getElementById('colorPopHex'), ci = document.getElementById('colorPopInput');
+  if (hx && hx.value.toLowerCase() !== hex.slice(1)) hx.value = hex.slice(1);
+  if (ci) ci.value = hex;
+}
+function openColorPicker(sw, ev) {
+  let pop = document.getElementById('colorPop');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'colorPop'; pop.className = 'color-pop';
+    pop.innerHTML = '<input type="color" id="colorPopInput"><div class="color-pop-hex">#<input type="text" id="colorPopHex" maxlength="6" spellcheck="false" placeholder="3b82f6"></div>';
+    document.body.appendChild(pop);
+    pop.querySelector('#colorPopInput').addEventListener('input', function () { _applyColor(this.value); });
+    pop.querySelector('#colorPopHex').addEventListener('input', function () {
+      const v = this.value.replace(/[^0-9a-fA-F]/g, ''); this.value = v;
+      if (v.length === 6) _applyColor('#' + v);
+      else if (v.length === 3) _applyColor('#' + v.split('').map(c => c + c).join(''));
+    });
+    document.addEventListener('click', function (e) {
+      if (pop.style.display === 'block' && !pop.contains(e.target) && !(e.target.closest && e.target.closest('.wcfg-swatch'))) pop.style.display = 'none';
+    });
+  }
+  _colorTarget = sw;
+  const cur = _swatchHex(sw);
+  pop.querySelector('#colorPopInput').value = cur;
+  pop.querySelector('#colorPopHex').value = cur.slice(1);
+  pop.style.display = 'block';
+  const r = sw.getBoundingClientRect();
+  pop.style.top = (r.bottom + 6) + 'px';
+  pop.style.left = Math.max(8, r.right - 184) + 'px';
+  setTimeout(() => { const h = document.getElementById('colorPopHex'); if (h) h.focus({ preventScroll: true }); }, 0);
+}
 function wcfgSeg(el) {
   Array.from(el.parentNode.children).forEach(b => b.classList.remove('active'));
   el.classList.add('active');
@@ -9151,18 +9200,16 @@ function renderWidgetConfig() {
     <div class="wcfg-section">
       <div class="wcfg-card">
         <div class="wcfg-card-title">Series</div>
-        <div class="wcfg-scroll"><div style="min-width:660px">
-          <div class="wcfg-th"><span style="width:148px">Parameter</span><span style="width:110px">Label</span><span style="width:64px">Type</span><span style="width:96px">Y axis</span><span style="width:38px">Color</span><span style="width:64px">Decimals</span></div>
-          <div class="wcfg-tr">
-            <select class="wcfg-in" style="width:148px"><option>temperature</option><option>humidity</option><option>pressure</option><option>voltage</option><option>current</option><option>power</option><option>status</option></select>
-            <input class="wcfg-in" style="width:110px" value="Temperature">
-            <span class="wcfg-ico" style="width:64px">${chart} ${chev}</span>
-            <select class="wcfg-in" style="width:96px"><option>default</option></select>
-            <span class="wcfg-swatch" style="width:38px;background:#3b82f6"></span>
-            <input class="wcfg-in" style="width:64px" type="number" value="0">
-            <span class="wcfg-ico">${trash}</span>
-          </div>
-        </div></div>
+        <div class="wcfg-th"><span style="flex:1;min-width:0">Parameter</span><span style="flex:1;min-width:0">Label</span><span style="width:54px">Type</span><span style="width:86px">Y axis</span><span style="width:34px">Color</span><span style="width:62px">Decimals</span><span style="width:34px"></span></div>
+        <div class="wcfg-tr">
+          <select class="wcfg-in" style="flex:1;min-width:0"><option>temperature</option><option>humidity</option><option>pressure</option><option>voltage</option><option>current</option><option>power</option><option>status</option></select>
+          <input class="wcfg-in" style="flex:1;min-width:0" value="Temperature">
+          <span class="wcfg-ico" style="width:54px">${chart} ${chev}</span>
+          <select class="wcfg-in" style="width:86px"><option>default</option></select>
+          <span class="wcfg-swatch" style="width:34px;background:#3b82f6"></span>
+          <input class="wcfg-in" style="width:62px" type="number" value="0">
+          <span class="wcfg-ico" style="width:34px">${trash}</span>
+        </div>
         <button class="btn btn-secondary btn-sm wcfg-add">Add series</button>
       </div>
     </div>
@@ -10906,6 +10953,11 @@ const _tipObs = new MutationObserver(muts => {
   }
 });
 _tipObs.observe(document.body, { childList: true, subtree: true });
+
+document.addEventListener('click', function (e) {
+  const sw = e.target.closest ? e.target.closest('.wcfg-swatch') : null;
+  if (sw) openColorPicker(sw, e);
+});
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
