@@ -9253,6 +9253,16 @@ function renderWidgetConfig() {
         <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Grid</span></div>
         <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Stack mode</span><span style="display:inline-flex;color:var(--text-subtle)" title="Stack series on top of each other">${li('info')}</span></div>
       </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Card appearance</h4></div>
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Background</span><span class="wcfg-swatch" style="width:34px;background:var(--surface);border:1px solid var(--border-strong)"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Show card buttons</span><div class="wcfg-chips"><span class="wcfg-chip on" onclick="wcfgChip(this)">Fullscreen</span></div></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Card border radius</span><input class="wcfg-in" style="width:90px" value="0px"></div>
+        <div class="wcfg-line"><span class="lbl" style="flex:1">Card padding</span><input class="wcfg-in" style="width:90px" value="12px"></div>
+      </div>
     </div>`;
   if (window.lucide) window.lucide.createIcons();
 }
