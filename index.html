@@ -2520,6 +2520,17 @@
 .dashcv-title{font-size:26px;font-weight:700;color:var(--text);margin-top:2px;outline:none;display:inline-block;min-width:120px}
 .dashcv-canvas{position:relative;min-height:56vh;display:grid;place-items:center}
 .dashcv-addwidget{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:30px 46px;display:inline-flex;align-items:center;gap:16px;cursor:pointer;color:var(--text-muted);transition:border-color .12s,color .12s,background .12s}
+.dashcv-canvas.has-widgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;place-items:stretch;align-content:start;min-height:auto}
+.dashcv-widget{border:1px solid var(--border);border-radius:10px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;min-height:210px;box-shadow:var(--shadow-sm)}
+.dashcv-widget-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)}
+.dashcv-widget-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dashcv-widget-del{color:var(--text-muted);cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:5px;flex-shrink:0}
+.dashcv-widget-del:hover{background:var(--bg-hover);color:var(--danger)}
+.dashcv-widget-del svg{width:15px;height:15px}
+.dashcv-widget-body{flex:1;padding:14px;display:flex;align-items:center;justify-content:center;min-height:0}
+.dashcv-widget-body svg{width:100%;height:100%;max-height:150px;display:block}
+.dashcv-addtile{border:2px dashed var(--border);border-radius:10px;display:grid;place-items:center;min-height:210px;cursor:pointer;color:var(--text-muted);background:var(--surface);transition:border-color .12s,color .12s}
+.dashcv-addtile:hover{border-color:var(--primary);color:var(--primary)}
 .dashcv-addwidget:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
 .dashcv-addwidget svg{width:28px;height:28px}
 .dashcv-addwidget span{font-size:18px;font-weight:600}
@@ -9132,9 +9143,25 @@ function backFromWidgetConfig() {
   setWidgetView('widgets');
 }
 function wcfgAdd() {
-  const name = state.widgetItem || 'widget';
+  const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
+  const ti = document.getElementById('wcfgTitleInput');
+  const title = (ti && ti.value.trim()) || state.widgetItem || 'Widget';
+  const items = widgetItemsFor(state.widgetBundle);
+  const it = items.find(x => x[0] === state.widgetItem);
+  const type = it ? it[2] : '_bundle';
+  if (d) {
+    if (!d.widgets) d.widgets = [];
+    state._widgetSeq = (state._widgetSeq || 0) + 1;
+    d.widgets.push({ id: 'w' + state._widgetSeq, title: title, type: type, bundle: state.widgetBundle });
+  }
   closeWidgetModal();
-  toast('Added "' + name + '" widget', 'success');
+  renderDashboardCanvas();
+  toast('Added "' + title + '" widget', 'success');
+}
+function dashRemoveWidget(id) {
+  const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
+  if (d && d.widgets) d.widgets = d.widgets.filter(w => w.id !== id);
+  renderDashboardCanvas();
 }
 function wcfgToggle(el) { el.classList.toggle('on'); }
 function wcfgChip(el) { el.classList.toggle('on'); }
@@ -9298,7 +9325,7 @@ function renderWidgetConfig() {
         <div class="wcfg-line">
           <div class="switch on" onclick="wcfgToggle(this)"></div>
           <span class="lbl">Title</span>
-          <input class="wcfg-in" style="flex:1" value="${name}">
+          <input class="wcfg-in" id="wcfgTitleInput" style="flex:1" value="${name}">
           <span style="color:var(--text-muted);font-size:13px">(x)</span>
           <span class="wcfg-ico"><b style="font-size:13px">A</b></span>
           <span class="wcfg-swatch" style="width:34px;background:#111"></span>
@@ -9348,6 +9375,7 @@ function renderDashboardCanvas() {
   const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
   const c = document.getElementById('dashCanvasContent');
   if (!c) return;
+  const widgets = (d && d.widgets) || [];
   c.innerHTML = `
     <div class="dashcv-bar">
       <div class="dashcv-bar-left">
@@ -9364,11 +9392,20 @@ function renderDashboardCanvas() {
     <div class="dashcv-body">
       <div class="dashcv-titlelabel">Title*</div>
       <div class="dashcv-title" id="dashCanvasTitle" contenteditable="true" spellcheck="false">${_kvEscape(d ? d.title : 'Dashboard')}</div>
-      <div class="dashcv-canvas">
-        <button class="dashcv-addwidget" onclick="dashCanvasAddWidget()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          <span>Add new widget</span>
-        </button>
+      <div class="dashcv-canvas${widgets.length ? ' has-widgets' : ''}">
+        ${widgets.length ? (widgets.map(w => `
+          <div class="dashcv-widget">
+            <div class="dashcv-widget-head">
+              <span class="dashcv-widget-title">${_kvEscape(w.title)}</span>
+              <span class="dashcv-widget-del" title="Remove" onclick="dashRemoveWidget('${w.id}')">${li('x')}</span>
+            </div>
+            <div class="dashcv-widget-body">${wItemPreview(w.type) || ''}</div>
+          </div>`).join('') + `
+          <button class="dashcv-addtile" onclick="dashCanvasAddWidget()"><span style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add new widget</span></span></button>`) : `
+          <button class="dashcv-addwidget" onclick="dashCanvasAddWidget()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            <span>Add new widget</span>
+          </button>`}
       </div>
     </div>`;
   if (window.lucide) window.lucide.createIcons();
