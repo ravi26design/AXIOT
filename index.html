@@ -9140,6 +9140,39 @@ function wcfgToggle(el) { el.classList.toggle('on'); }
 function wcfgChip(el) { el.classList.toggle('on'); }
 function wcfgPick(el) { Array.from(el.parentNode.children).forEach(c => c.classList.remove('on')); el.classList.add('on'); }
 function wcfgCollapse(el) { const card = el.closest('.wcfg-card'); if (card) card.classList.toggle('collapsed'); }
+function _seriesRowHTML() {
+  return `<div class="wcfg-tr">
+          <select class="wcfg-in" style="flex:1;min-width:0"><option>temperature</option><option>humidity</option><option>pressure</option><option>voltage</option><option>current</option><option>power</option><option>status</option></select>
+          <input class="wcfg-in" style="flex:1;min-width:0" value="Temperature">
+          <span class="wcfg-ico" style="width:54px">${li('activity')} ${li('chevron-down')}</span>
+          <select class="wcfg-in" style="width:86px"><option>default</option></select>
+          <span class="wcfg-swatch" style="width:34px;background:#3b82f6"></span>
+          <input class="wcfg-in" style="width:62px" type="number" value="0">
+          <span class="wcfg-ico" style="width:34px" onclick="wcfgDelRow(this)">${li('trash-2')}</span>
+        </div>`;
+}
+function _yaxisRowHTML() {
+  return `<div class="wcfg-tr">
+            <span style="width:64px;font-size:13px">default</span>
+            <span style="width:46px"><input type="checkbox" checked></span>
+            <input class="wcfg-in" style="width:120px" placeholder="Set">
+            <select class="wcfg-in" style="width:92px"><option>Left</option><option>Right</option></select>
+            <input class="wcfg-in" style="width:60px" type="number" value="0">
+          </div>`;
+}
+function wcfgAddRow(btn, html) {
+  const card = btn.closest('.wcfg-card');
+  const rows = card.querySelectorAll('.wcfg-tr');
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html.trim();
+  const row = tmp.firstElementChild;
+  if (rows.length) { const last = rows[rows.length - 1]; last.parentNode.insertBefore(row, last.nextSibling); }
+  else { card.appendChild(row); }
+  if (window.lucide) window.lucide.createIcons();
+}
+function wcfgAddSeries(btn) { wcfgAddRow(btn, _seriesRowHTML()); }
+function wcfgAddYAxis(btn) { wcfgAddRow(btn, _yaxisRowHTML()); }
+function wcfgDelRow(el) { const r = el.closest('.wcfg-tr'); if (r) r.remove(); }
 let _colorTarget = null;
 function _swatchHex(sw) {
   const bg = sw.style.background || sw.style.backgroundColor || '';
@@ -9204,16 +9237,8 @@ function renderWidgetConfig() {
       <div class="wcfg-card">
         <div class="wcfg-card-title">Series</div>
         <div class="wcfg-th"><span style="flex:1;min-width:0">Parameter</span><span style="flex:1;min-width:0">Label</span><span style="width:54px">Type</span><span style="width:86px">Y axis</span><span style="width:34px">Color</span><span style="width:62px">Decimals</span><span style="width:34px"></span></div>
-        <div class="wcfg-tr">
-          <select class="wcfg-in" style="flex:1;min-width:0"><option>temperature</option><option>humidity</option><option>pressure</option><option>voltage</option><option>current</option><option>power</option><option>status</option></select>
-          <input class="wcfg-in" style="flex:1;min-width:0" value="Temperature">
-          <span class="wcfg-ico" style="width:54px">${chart} ${chev}</span>
-          <select class="wcfg-in" style="width:86px"><option>default</option></select>
-          <span class="wcfg-swatch" style="width:34px;background:#3b82f6"></span>
-          <input class="wcfg-in" style="width:62px" type="number" value="0">
-          <span class="wcfg-ico" style="width:34px">${trash}</span>
-        </div>
-        <button class="btn btn-secondary btn-sm wcfg-add">Add series</button>
+        ${_seriesRowHTML()}
+        <button class="btn btn-secondary btn-sm wcfg-add" onclick="wcfgAddSeries(this)">Add series</button>
       </div>
     </div>
 
@@ -9222,15 +9247,9 @@ function renderWidgetConfig() {
         <div class="wcfg-card-title">Y axes</div>
         <div class="wcfg-scroll"><div style="min-width:640px">
           <div class="wcfg-th"><span style="width:64px">Id</span><span style="width:46px">Show</span><span style="width:120px">Label</span><span style="width:92px">Position</span><span style="width:60px">Decimals</span></div>
-          <div class="wcfg-tr">
-            <span style="width:64px;font-size:13px">default</span>
-            <span style="width:46px"><input type="checkbox" checked></span>
-            <input class="wcfg-in" style="width:120px" placeholder="Set">
-            <select class="wcfg-in" style="width:92px"><option>Left</option><option>Right</option></select>
-            <input class="wcfg-in" style="width:60px" type="number" value="0">
-          </div>
+          ${_yaxisRowHTML()}
         </div></div>
-        <button class="btn btn-secondary btn-sm wcfg-add">Add Y axis</button>
+        <button class="btn btn-secondary btn-sm wcfg-add" onclick="wcfgAddYAxis(this)">Add Y axis</button>
       </div>
     </div>
 
