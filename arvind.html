@@ -8870,9 +8870,7 @@ const WIDGET_BUNDLES = [
   { name: 'Date' }, { name: 'Navigation widgets' }, { name: 'HTML widgets' }, { name: 'GPIO widgets' },
   { name: 'Gateway widgets' }, { name: 'Edge widgets' }, { name: 'Entity widgets' }, { name: 'Entity admin widgets' },
   { name: 'Home page widgets' }, { name: 'Industrial widgets' }, { name: 'Air quality' }, { name: 'Indoor Environment' },
-  { name: 'Outdoor Environment' }, { name: 'Liquid level' }, { name: 'SCADA symbols' }, { name: 'Traditional SCADA fluid system' },
-  { name: 'General high-performance SCADA' }, { name: 'High-performance SCADA oil & gas' },
-  { name: 'High-performance SCADA energy system' }, { name: 'High-performance SCADA fluid system' }
+  { name: 'Outdoor Environment' }, { name: 'Liquid level' }
 ];
 function widgetPreview(name) {
   const P = {
@@ -9041,11 +9039,13 @@ function renderWidgetHead() {
       </div>`;
   } else {
     head.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <div class="wgt-title">Select widgets bundle</div>
-        <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
-      </div>
-      <div class="search-box wgt-search" style="width:100%;max-width:none">${_SEARCH_SVG}<input id="widgetSearch" placeholder="Search bundles…" oninput="renderWidgetBundles(this.value)" /></div>`;
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:14px">
+        <div class="wgt-title" style="white-space:nowrap">Select widgets bundle</div>
+        <div style="display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end">
+          <div class="search-box wgt-search" style="flex:1;max-width:420px">${_SEARCH_SVG}<input id="widgetSearch" placeholder="Search bundles…" oninput="renderWidgetBundles(this.value)" /></div>
+          <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
+        </div>
+      </div>`;
   }
   if (window.lucide) window.lucide.createIcons();
 }
