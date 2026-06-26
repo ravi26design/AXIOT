@@ -9180,6 +9180,19 @@ function renderWidgetConfig() {
 
 
     <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>X axis</h4></div>
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show</span><span style="display:inline-flex;color:var(--text-muted)">${li('chevron-up')}</span></div>
+        <div class="wcfg-line"><span class="lbl" style="min-width:70px">Label</span><input class="wcfg-in" style="flex:1" placeholder="Set"><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><span class="lbl" style="min-width:70px;flex:1">Position</span><select class="wcfg-in" style="width:150px"><option>Bottom</option><option>Top</option></select></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Tick labels</span><span class="wcfg-ico">${li('clock')}</span><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show ticks</span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show line</span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Show split lines</span><span style="display:inline-flex;color:var(--text-subtle)" title="Show grid split lines">${li('info')}</span><span style="flex:1"></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px;opacity:.5"></span></div>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
       <div class="wcfg-sec-head"><h4>Appearance</h4></div>
       <div class="wcfg-card" style="padding:12px">
         <div class="wcfg-line">
