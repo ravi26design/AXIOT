@@ -2522,6 +2522,9 @@
 .dashcv-addwidget{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:30px 46px;display:inline-flex;align-items:center;gap:16px;cursor:pointer;color:var(--text-muted);transition:border-color .12s,color .12s,background .12s}
 .dashcv-canvas.has-widgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;place-items:stretch;align-content:start;min-height:auto}
 .dashcv-widget{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;min-height:280px;box-shadow:var(--shadow-sm)}
+.dashcv-widget-head{cursor:grab}
+.dashcv-widget.dragging{opacity:.4}
+.dashcv-widget.dragover{outline:2px dashed var(--primary);outline-offset:3px}
 .dashcv-widget-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border)}
 .dashcv-widget-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dashcv-widget-del{color:var(--text-muted);cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:5px;flex-shrink:0}
@@ -9175,6 +9178,40 @@ function dashRemoveWidget(id) {
   if (d && d.widgets) d.widgets = d.widgets.filter(w => w.id !== id);
   renderDashboardCanvas();
 }
+let _dragWid = null;
+function dashDragStart(ev, id) {
+  _dragWid = id;
+  ev.dataTransfer.effectAllowed = 'move';
+  try { ev.dataTransfer.setData('text/plain', id); } catch (e) {}
+  const t = ev.currentTarget;
+  setTimeout(() => t.classList.add('dragging'), 0);
+}
+function dashDragOver(ev) {
+  ev.preventDefault();
+  ev.dataTransfer.dropEffect = 'move';
+  const t = ev.currentTarget;
+  if (t && !t.classList.contains('dragging')) {
+    document.querySelectorAll('.dashcv-widget.dragover').forEach(e => e.classList.remove('dragover'));
+    t.classList.add('dragover');
+  }
+}
+function dashDrop(ev, targetId) {
+  ev.preventDefault();
+  const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
+  if (!d || !d.widgets || !_dragWid || _dragWid === targetId) { dashDragEnd(); return; }
+  const arr = d.widgets;
+  const from = arr.findIndex(w => w.id === _dragWid);
+  const to = arr.findIndex(w => w.id === targetId);
+  if (from < 0 || to < 0) { dashDragEnd(); return; }
+  const moved = arr.splice(from, 1)[0];
+  arr.splice(to, 0, moved);
+  _dragWid = null;
+  renderDashboardCanvas();
+}
+function dashDragEnd() {
+  _dragWid = null;
+  document.querySelectorAll('.dashcv-widget.dragging, .dashcv-widget.dragover').forEach(e => e.classList.remove('dragging', 'dragover'));
+}
 function wcfgToggle(el) { el.classList.toggle('on'); }
 function wcfgChip(el) { el.classList.toggle('on'); }
 function wcfgPick(el) { Array.from(el.parentNode.children).forEach(c => c.classList.remove('on')); el.classList.add('on'); }
@@ -9435,7 +9472,7 @@ function renderDashboardCanvas() {
     <div class="dashcv-body">
       <div class="dashcv-canvas${widgets.length ? ' has-widgets' : ''}">
         ${widgets.length ? (widgets.map(w => `
-          <div class="dashcv-widget">
+          <div class="dashcv-widget" draggable="true" data-wid="${w.id}" ondragstart="dashDragStart(event,'${w.id}')" ondragover="dashDragOver(event)" ondrop="dashDrop(event,'${w.id}')" ondragend="dashDragEnd(event)">
             <div class="dashcv-widget-head">
               <span class="dashcv-widget-title">${_kvEscape(w.title)}</span>
               <span class="dashcv-widget-del" title="Remove" onclick="dashRemoveWidget('${w.id}')">${li('x')}</span>
