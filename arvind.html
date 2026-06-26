@@ -2525,7 +2525,7 @@
 .dashcv-addwidget span{font-size:18px;font-weight:600}
 </style>
 <style>
-.wgt-drawer .drawer-head{flex-wrap:wrap;gap:12px;align-items:center}
+.wgt-drawer .drawer-head{align-items:flex-start;gap:12px}
 .wgt-title{font-size:18px;font-weight:700;letter-spacing:-.2px}
 .wgt-head-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .wgt-search{min-width:200px;margin:0}
@@ -2543,10 +2543,10 @@
 .wgt-info svg{width:13px;height:13px}
 .wgt-preview{height:150px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;padding:12px}
 .wgt-preview svg{width:100%;height:100%;display:block}
-/* widget 3-step stepper (reuses .pw-step* from device/profile wizard) */
-.wgt-steps{display:flex;align-items:center;flex:1;min-width:0;gap:0}
-.wgt-steps .pw-step{min-width:0}
-.wgt-steps .pw-step-label{overflow:hidden;text-overflow:ellipsis}
+/* widget 3-step stepper (reuses .pw-step* + .drawer-title/.drawer-sub from device wizard) */
+.wgt-stepsbar{padding:14px 22px 0}
+.wgt-stepsbar .pw-step{min-width:0}
+.wgt-stepsbar .pw-step-label{overflow:hidden;text-overflow:ellipsis}
 /* widget config form */
 .wcfg-body{padding:18px 22px 26px}
 .wcfg-seg{display:inline-flex;background:var(--bg-hover);border-radius:999px;padding:3px}
@@ -2578,6 +2578,7 @@
 <div class="drawer-backdrop" id="widgetDrawerBackdrop" onclick="closeWidgetModal()"></div>
 <aside class="drawer wgt-drawer" id="widgetDrawer">
   <div class="drawer-head" id="wgtHead"></div>
+  <div class="wgt-stepsbar" id="wgtStepsBar"></div>
   <div class="drawer-body wgt-body" id="widgetBundlesGrid"></div>
   <div class="drawer-body wcfg-body" id="widgetConfigBody" style="display:none"></div>
   <div class="drawer-foot" id="wgtFooter" style="display:none">
@@ -9062,19 +9063,20 @@ function wgtSteps(active) {
     out += `<div class="pw-step ${st}"${onclick}><span class="pw-step-num">${num}</span><span class="pw-step-label">${_kvEscape(lbl[n-1])}</span></div>`;
     if (n < 3) out += '<div class="pw-step-line"></div>';
   }
-  return `<div class="wgt-steps">${out}</div>`;
+  return `<div class="pw-steps" style="margin-bottom:0">${out}</div>`;
 }
 function renderWidgetHead() {
   const head = document.getElementById('wgtHead');
   if (!head) return;
   const close = `<button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>`;
-  if (state.widgetMode === 'config') {
-    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">${wgtSteps(3)}${close}</div>`;
-  } else if (state.widgetMode === 'widgets') {
-    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">${wgtSteps(2)}${close}</div>`;
-  } else {
-    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:14px">${wgtSteps(1)}<div style="display:flex;align-items:center;gap:12px">${close}</div></div>`;
-  }
+  let sub;
+  if (state.widgetMode === 'config') sub = 'Three steps. Configure the widget, then add it to your dashboard.';
+  else if (state.widgetMode === 'widgets') sub = 'Three steps. Choose a widget from the ' + (state.widgetBundle || '') + ' type.';
+  else sub = 'Three steps. Pick a widget type, choose a widget, then configure it.';
+  head.innerHTML = `<div><div class="drawer-title">Add widget</div><div class="drawer-sub">${_kvEscape(sub)}</div></div>${close}`;
+  const active = state.widgetMode === 'config' ? 3 : (state.widgetMode === 'widgets' ? 2 : 1);
+  const bar = document.getElementById('wgtStepsBar');
+  if (bar) bar.innerHTML = wgtSteps(active);
   if (window.lucide) window.lucide.createIcons();
 }
 function renderWidgetItems(q) {
