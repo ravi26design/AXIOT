@@ -2556,6 +2556,7 @@
 .wcfg-sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
 .wcfg-sec-head h4{font-size:15px;font-weight:600;margin:0;color:var(--text)}
 .wcfg-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--surface)}
+.wcfg-card-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:12px}
 .wcfg-scroll{overflow-x:auto}
 .wcfg-th{display:flex;gap:8px;padding:0 2px 9px;font-size:12px;color:var(--text-muted);font-weight:500}
 .wcfg-tr{display:flex;gap:8px;align-items:center;padding-top:11px;border-top:1px solid var(--border)}
@@ -9143,13 +9144,13 @@ function renderWidgetConfig() {
   const gear = li('settings'), trash = li('trash-2'), pencil = li('pencil'), x = li('x'), chev = li('chevron-down'), chart = li('activity'), thermo = li('thermometer');
   body.innerHTML = `
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Datasource</h4></div>
-      <div class="wcfg-card"><select class="input"><option value="" disabled selected>Device *</option><option>Gateway-01</option><option>Sensor-A12</option></select></div>
+      <div class="wcfg-card">
+        <div class="wcfg-card-title">Datasource</div><select class="input"><option value="" disabled selected>Device *</option><option>Gateway-01</option><option>Sensor-A12</option></select></div>
     </div>
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Series</h4></div>
       <div class="wcfg-card">
+        <div class="wcfg-card-title">Series</div>
         <div class="wcfg-scroll"><div style="min-width:660px">
           <div class="wcfg-th"><span style="width:148px">Parameter</span><span style="width:110px">Label</span><span style="width:64px">Type</span><span style="width:96px">Y axis</span><span style="width:38px">Color</span><span style="width:64px">Decimals</span></div>
           <div class="wcfg-tr">
@@ -9167,8 +9168,8 @@ function renderWidgetConfig() {
     </div>
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Y axes</h4></div>
       <div class="wcfg-card">
+        <div class="wcfg-card-title">Y axes</div>
         <div class="wcfg-scroll"><div style="min-width:640px">
           <div class="wcfg-th"><span style="width:64px">Id</span><span style="width:46px">Show</span><span style="width:120px">Label</span><span style="width:92px">Position</span><span style="width:60px">Decimals</span></div>
           <div class="wcfg-tr">
@@ -9185,8 +9186,8 @@ function renderWidgetConfig() {
 
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>X axis</h4></div>
       <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-card-title">X axis</div>
         <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto;flex:1">Show</span><span style="display:inline-flex;color:var(--text-muted)">${li('chevron-up')}</span></div>
         <div class="wcfg-line"><span class="lbl" style="min-width:70px">Label</span><input class="wcfg-in" style="flex:1" placeholder="Set"><span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span><span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span></div>
         <div class="wcfg-line"><span class="lbl" style="min-width:70px;flex:1">Position</span><select class="wcfg-in" style="width:150px"><option>Bottom</option><option>Top</option></select></div>
@@ -9225,8 +9226,8 @@ function renderWidgetConfig() {
     </div>
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Appearance</h4></div>
       <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-card-title">Appearance</div>
         <div class="wcfg-line">
           <div class="switch on" onclick="wcfgToggle(this)"></div>
           <span class="lbl">Title</span>
@@ -9247,8 +9248,8 @@ function renderWidgetConfig() {
     </div>
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Chart</h4></div>
       <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-card-title">Chart</div>
         <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Data zoom</span></div>
         <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Grid</span></div>
         <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Stack mode</span><span style="display:inline-flex;color:var(--text-subtle)" title="Stack series on top of each other">${li('info')}</span></div>
@@ -9256,8 +9257,8 @@ function renderWidgetConfig() {
     </div>
 
     <div class="wcfg-section">
-      <div class="wcfg-sec-head"><h4>Card appearance</h4></div>
       <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-card-title">Card appearance</div>
         <div class="wcfg-line"><span class="lbl" style="flex:1">Background</span><span class="wcfg-swatch" style="width:34px;background:var(--surface);border:1px solid var(--border-strong)"></span></div>
         <div class="wcfg-line"><span class="lbl" style="flex:1">Show card buttons</span><div class="wcfg-chips"><span class="wcfg-chip on" onclick="wcfgChip(this)">Fullscreen</span></div></div>
         <div class="wcfg-line"><span class="lbl" style="flex:1">Card border radius</span><input class="wcfg-in" style="width:90px" value="0px"></div>
