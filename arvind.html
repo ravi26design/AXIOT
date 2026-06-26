@@ -2543,6 +2543,16 @@
 .wgt-info svg{width:13px;height:13px}
 .wgt-preview{height:150px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;padding:12px}
 .wgt-preview svg{width:100%;height:100%;display:block}
+/* widget 3-step stepper */
+.wgt-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;min-width:0}
+.wstep{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.wstep .num{width:19px;height:19px;border-radius:50%;background:var(--bg-hover);display:inline-grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
+.wstep.active{color:var(--text);font-weight:600}
+.wstep.active .num{background:var(--primary);color:#fff}
+.wstep.done .num{background:var(--primary);color:#fff}
+.wstep.clickable{cursor:pointer}
+.wstep.clickable:hover{color:var(--primary)}
+.wsep{color:var(--border-strong)}
 /* widget config form */
 .wcfg-body{padding:18px 22px 26px}
 .wcfg-seg{display:inline-flex;background:var(--bg-hover);border-radius:999px;padding:3px}
@@ -9043,36 +9053,29 @@ function wItemPreview(type) {
   if (C[type]) return C[type];
   return widgetPreview(state.widgetBundle || '');
 }
+function wgtStep3Label() {
+  const def = {'Charts':'Time series chart','Cards':'Value card','Alarm widgets':'Alarms table','Tables':'Entities table','Count widgets':'Alarm count'};
+  return state.widgetItem || def[state.widgetBundle] || 'Configure widget';
+}
+function wgtSteps(active) {
+  const lbl = [ 'Select widgets Type', 'Select widget', wgtStep3Label() ];
+  function step(n, click) {
+    const cls = (active === n ? 'active' : (active > n ? 'done clickable' : ''));
+    const onclick = (active > n && click) ? ` onclick="${click}"` : '';
+    return `<span class="wstep ${cls}"${onclick}><span class="num">${n}</span>${_kvEscape(lbl[n-1])}</span>`;
+  }
+  return `<div class="wgt-steps">${step(1,'backToWidgetBundles()')}<span class="wsep">&rsaquo;</span>${step(2,'backFromWidgetConfig()')}<span class="wsep">&rsaquo;</span>${step(3,'')}</div>`;
+}
 function renderWidgetHead() {
   const head = document.getElementById('wgtHead');
   if (!head) return;
+  const close = `<button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>`;
   if (state.widgetMode === 'config') {
-    head.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">
-        <div style="display:flex;align-items:center;gap:10px;min-width:0">
-          <button class="icon-btn" title="Back" onclick="backFromWidgetConfig()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
-          <div class="wgt-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Add widget: ${_kvEscape(state.widgetItem||'')}</div>
-        </div>
-        <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
-      </div>`;
+    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">${wgtSteps(3)}${close}</div>`;
   } else if (state.widgetMode === 'widgets') {
-    head.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-        <div style="display:flex;align-items:center;gap:10px">
-          <button class="icon-btn" title="Back" onclick="backToWidgetBundles()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
-          <div class="wgt-title">${_kvEscape(state.widgetBundle)}: select widget</div>
-        </div>
-        <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
-      </div>`;
+    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">${wgtSteps(2)}${close}</div>`;
   } else {
-    head.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:14px">
-        <div class="wgt-title" style="white-space:nowrap">Select widgets bundle</div>
-        <div style="display:flex;align-items:center;gap:12px;flex:1;justify-content:flex-end">
-          <div class="search-box wgt-search" style="width:240px">${_SEARCH_SVG}<input id="widgetSearch" placeholder="Search bundles…" oninput="renderWidgetBundles(this.value)" /></div>
-          <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
-        </div>
-      </div>`;
+    head.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:14px">${wgtSteps(1)}<div style="display:flex;align-items:center;gap:12px">${close}</div></div>`;
   }
   if (window.lucide) window.lucide.createIcons();
 }
