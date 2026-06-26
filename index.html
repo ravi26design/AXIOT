@@ -9047,8 +9047,7 @@ function wItemPreview(type) {
   return widgetPreview(state.widgetBundle || '');
 }
 function wgtStep3Label() {
-  const def = {'Charts':'Time series chart','Cards':'Value card','Alarm widgets':'Alarms table','Tables':'Entities table','Count widgets':'Alarm count'};
-  return state.widgetItem || def[state.widgetBundle] || 'Configure widget';
+  return 'Configure widget';
 }
 function wgtSteps(active) {
   const lbl = [ 'Select widgets Type', 'Select widget', wgtStep3Label() ];
