@@ -2543,12 +2543,45 @@
 .wgt-info svg{width:13px;height:13px}
 .wgt-preview{height:150px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;padding:12px}
 .wgt-preview svg{width:100%;height:100%;display:block}
+/* widget config form */
+.wcfg-body{padding:18px 22px 26px}
+.wcfg-seg{display:inline-flex;background:var(--bg-hover);border-radius:999px;padding:3px}
+.wcfg-seg button{border:none;background:transparent;padding:5px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;transition:.12s}
+.wcfg-seg button.active{background:var(--surface);color:var(--primary);box-shadow:var(--shadow-sm)}
+.wcfg-section{margin-bottom:18px}
+.wcfg-sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px}
+.wcfg-sec-head h4{font-size:15px;font-weight:600;margin:0;color:var(--text)}
+.wcfg-card{border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--surface)}
+.wcfg-scroll{overflow-x:auto}
+.wcfg-th{display:flex;gap:8px;padding:0 2px 9px;font-size:12px;color:var(--text-muted);font-weight:500}
+.wcfg-tr{display:flex;gap:8px;align-items:center;padding-top:11px;border-top:1px solid var(--border)}
+.wcfg-in{padding:7px 9px;background:var(--surface);border:1px solid var(--border-strong);border-radius:5px;font-size:13px;outline:none;color:var(--text)}
+.wcfg-in:focus{border-color:var(--primary)}
+.wcfg-empty{text-align:center;color:var(--text-muted);padding:24px;font-size:13px}
+.wcfg-swatch{height:28px;border-radius:5px;border:1px solid var(--border);flex-shrink:0;cursor:pointer}
+.wcfg-ico{height:30px;min-width:34px;padding:0 6px;border:1px solid var(--border-strong);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;gap:3px;color:var(--text-muted);background:var(--surface);cursor:pointer;flex-shrink:0}
+.wcfg-ico svg{width:15px;height:15px}
+.wcfg-add{margin-top:13px}
+.wcfg-keychip{display:inline-flex;align-items:center;gap:6px;background:var(--bg-hover);border-radius:999px;padding:5px 9px;font-size:13px;color:var(--text)}
+.wcfg-keychip svg{width:14px;height:14px;color:var(--text-muted);cursor:pointer}
+.wcfg-line{display:flex;align-items:center;gap:14px;border:1px solid var(--border);border-radius:9px;padding:11px 14px;margin-bottom:10px}
+.wcfg-line:last-child{margin-bottom:0}
+.wcfg-line .lbl{font-size:14px;min-width:78px;color:var(--text)}
+.wcfg-foot{display:flex;align-items:center;justify-content:space-between;width:100%}
+#wgtFooter{justify-content:flex-start}
 </style>
 <!-- Select widgets bundle drawer -->
 <div class="drawer-backdrop" id="widgetDrawerBackdrop" onclick="closeWidgetModal()"></div>
 <aside class="drawer wgt-drawer" id="widgetDrawer">
   <div class="drawer-head" id="wgtHead"></div>
   <div class="drawer-body wgt-body" id="widgetBundlesGrid"></div>
+  <div class="drawer-body wcfg-body" id="widgetConfigBody" style="display:none"></div>
+  <div class="drawer-foot" id="wgtFooter" style="display:none">
+    <div class="wcfg-foot">
+      <button class="btn btn-ghost" onclick="backFromWidgetConfig()">Cancel</button>
+      <div style="display:flex;gap:8px"><button class="btn btn-secondary">Preview</button><button class="btn btn-primary" onclick="wcfgAdd()">Add</button></div>
+    </div>
+  </div>
 </aside>
 
 <!-- Dashboard editor canvas screen -->
@@ -9011,7 +9044,19 @@ function wItemPreview(type) {
 function renderWidgetHead() {
   const head = document.getElementById('wgtHead');
   if (!head) return;
-  if (state.widgetMode === 'widgets') {
+  if (state.widgetMode === 'config') {
+    head.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0">
+          <button class="icon-btn" title="Back" onclick="backFromWidgetConfig()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg></button>
+          <div class="wgt-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Add widget: ${_kvEscape(state.widgetItem||'')}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="wcfg-seg"><button class="active" onclick="wcfgSeg(this)">Basic</button><button onclick="wcfgSeg(this)">Advanced</button></div>
+          <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
+        </div>
+      </div>`;
+  } else if (state.widgetMode === 'widgets') {
     head.innerHTML = `
       <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
         <div style="display:flex;align-items:center;gap:10px">
@@ -9051,15 +9096,141 @@ function backToWidgetBundles() {
   state.widgetMode = 'bundles';
   renderWidgetHead();
   renderWidgetBundles('');
+  setWidgetView('bundles');
 }
 function selectWidgetItem(name) {
+  state.widgetItem = name;
+  state.widgetMode = 'config';
+  renderWidgetHead();
+  renderWidgetConfig();
+  setWidgetView('config');
+}
+function setWidgetView(mode) {
+  const grid = document.getElementById('widgetBundlesGrid');
+  const cfg = document.getElementById('widgetConfigBody');
+  const foot = document.getElementById('wgtFooter');
+  const isCfg = mode === 'config';
+  if (grid) grid.style.display = isCfg ? 'none' : '';
+  if (cfg) cfg.style.display = isCfg ? 'block' : 'none';
+  if (foot) foot.style.display = isCfg ? 'flex' : 'none';
+}
+function backFromWidgetConfig() {
+  state.widgetMode = 'widgets';
+  renderWidgetHead();
+  renderWidgetItems('');
+  setWidgetView('widgets');
+}
+function wcfgAdd() {
+  const name = state.widgetItem || 'widget';
   closeWidgetModal();
   toast('Added "' + name + '" widget', 'success');
+}
+function wcfgToggle(el) { el.classList.toggle('on'); }
+function wcfgSeg(el) {
+  Array.from(el.parentNode.children).forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+function renderWidgetConfig() {
+  const body = document.getElementById('widgetConfigBody');
+  if (!body) return;
+  const name = _kvEscape(state.widgetItem || 'Widget');
+  const gear = li('settings'), trash = li('trash-2'), pencil = li('pencil'), x = li('x'), chev = li('chevron-down'), chart = li('activity'), thermo = li('thermometer');
+  body.innerHTML = `
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Datasource</h4>
+        <div class="wcfg-seg"><button class="active" onclick="wcfgSeg(this)">Device</button><button onclick="wcfgSeg(this)">Entity alias</button></div></div>
+      <div class="wcfg-card"><select class="input"><option value="" disabled selected>Device *</option><option>Gateway-01</option><option>Sensor-A12</option></select></div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Series</h4>
+        <div class="wcfg-seg"><button class="active" onclick="wcfgSeg(this)">Series</button><button onclick="wcfgSeg(this)">Comparison</button></div></div>
+      <div class="wcfg-card">
+        <div class="wcfg-scroll"><div style="min-width:660px">
+          <div class="wcfg-th"><span style="width:148px">Key</span><span style="width:110px">Label</span><span style="width:64px">Type</span><span style="width:96px">Y axis</span><span style="width:38px">Color</span><span style="width:64px">Units</span><span style="width:64px">Decimals</span></div>
+          <div class="wcfg-tr">
+            <div style="width:148px"><span class="wcfg-keychip">${chart} temperature ${pencil} ${x}</span></div>
+            <input class="wcfg-in" style="width:110px" value="Temperature">
+            <span class="wcfg-ico" style="width:64px">${chart} ${chev}</span>
+            <select class="wcfg-in" style="width:96px"><option>default</option></select>
+            <span class="wcfg-swatch" style="width:38px;background:#3b82f6"></span>
+            <input class="wcfg-in" style="width:64px" value="°C">
+            <input class="wcfg-in" style="width:64px" type="number" value="0">
+            <span class="wcfg-ico">${gear}</span><span class="wcfg-ico">${trash}</span>
+          </div>
+        </div></div>
+        <button class="btn btn-secondary btn-sm wcfg-add">Add series</button>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Y axes</h4></div>
+      <div class="wcfg-card">
+        <div class="wcfg-scroll"><div style="min-width:640px">
+          <div class="wcfg-th"><span style="width:64px">Id</span><span style="width:46px">Show</span><span style="width:120px">Label</span><span style="width:92px">Position</span><span style="width:64px">Min</span><span style="width:64px">Max</span><span style="width:64px">Units</span><span style="width:60px">Decimals</span></div>
+          <div class="wcfg-tr">
+            <span style="width:64px;font-size:13px">default</span>
+            <span style="width:46px"><input type="checkbox" checked></span>
+            <input class="wcfg-in" style="width:120px" placeholder="Set">
+            <select class="wcfg-in" style="width:92px"><option>Left</option><option>Right</option></select>
+            <input class="wcfg-in" style="width:64px" placeholder="Auto">
+            <input class="wcfg-in" style="width:64px" placeholder="Auto">
+            <input class="wcfg-in" style="width:64px" placeholder="Set">
+            <input class="wcfg-in" style="width:60px" type="number" value="0">
+            <span class="wcfg-ico">${gear}</span>
+          </div>
+        </div></div>
+        <button class="btn btn-secondary btn-sm wcfg-add">Add Y axis</button>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Thresholds</h4></div>
+      <div class="wcfg-card">
+        <div class="wcfg-scroll"><div style="min-width:560px">
+          <div class="wcfg-th"><span style="width:150px">Source</span><span style="width:150px">Key / Value</span><span style="width:90px">Y axis</span><span style="width:50px">Color</span><span style="width:60px">Units</span><span style="width:60px">Decimals</span></div>
+          <div class="wcfg-empty">No thresholds configured</div>
+        </div></div>
+        <button class="btn btn-secondary btn-sm wcfg-add">Add threshold</button>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Appearance</h4></div>
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line">
+          <div class="switch on" onclick="wcfgToggle(this)"></div>
+          <span class="lbl">Title</span>
+          <input class="wcfg-in" style="flex:1" value="${name}">
+          <span style="color:var(--text-muted);font-size:13px">(x)</span>
+          <span class="wcfg-ico"><b style="font-size:13px">A</b></span>
+          <span class="wcfg-swatch" style="width:34px;background:#111"></span>
+        </div>
+        <div class="wcfg-line">
+          <div class="switch" onclick="wcfgToggle(this)"></div>
+          <span class="lbl">Card icon</span>
+          <input class="wcfg-in" style="width:80px" type="number" value="0">
+          <select class="wcfg-in" style="width:90px"><option>px</option><option>%</option></select>
+          <span class="wcfg-ico">${thermo}</span>
+          <span class="wcfg-swatch" style="width:34px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0/12px 12px"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wcfg-section">
+      <div class="wcfg-sec-head"><h4>Chart</h4></div>
+      <div class="wcfg-card" style="padding:12px">
+        <div class="wcfg-line"><div class="switch on" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Data zoom</span></div>
+        <div class="wcfg-line"><div class="switch" onclick="wcfgToggle(this)"></div><span class="lbl" style="min-width:auto">Grid</span></div>
+      </div>
+    </div>`;
+  if (window.lucide) window.lucide.createIcons();
 }
 function openWidgetModal() {
   state.widgetMode = 'bundles';
   renderWidgetHead();
   renderWidgetBundles('');
+  setWidgetView('bundles');
   document.getElementById('widgetDrawerBackdrop').classList.add('open');
   document.getElementById('widgetDrawer').classList.add('open');
 }
