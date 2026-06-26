@@ -9601,11 +9601,40 @@ function renderEnterpriseDetails() {
   `;
   if (window.lucide) window.lucide.createIcons();
 }
+const _SCREEN_KEY = 'axiot_screen_' + location.pathname;
+const _SCREEN_CTX = {
+  deviceDetails: 'detailsDeviceId', deviceProfileDetails: 'detailsDeviceProfileId',
+  gatewayDetails: 'detailsGatewayId', enterpriseDetails: 'detailsEnterpriseId',
+  userDetails: 'detailsUserIdx', dashboardCanvas: 'canvasDashId'
+};
+function _persistScreen(name) {
+  try {
+    const ctx = {};
+    if (_SCREEN_CTX[name]) ctx.id = state[_SCREEN_CTX[name]];
+    localStorage.setItem(_SCREEN_KEY, JSON.stringify({ screen: name, ctx }));
+  } catch (e) {}
+}
+function restoreScreen() {
+  let o;
+  try { o = JSON.parse(localStorage.getItem(_SCREEN_KEY) || 'null'); } catch (e) { return; }
+  if (!o || !o.screen) return;
+  const n = o.screen, id = (o.ctx || {}).id;
+  try {
+    if (n === 'deviceDetails'        && id != null) return openDeviceDetails(id);
+    if (n === 'deviceProfileDetails' && id != null) return openDeviceProfileDetails(id);
+    if (n === 'gatewayDetails'       && id != null) return openGatewayDetails(id);
+    if (n === 'enterpriseDetails'    && id != null) return openEnterpriseDetails(id);
+    if (n === 'userDetails'          && id != null) return openUserDetails(id);
+    if (n === 'dashboardCanvas'      && id != null) return openDashboardCanvas(id);
+    if (document.getElementById('screen-' + n)) switchScreen(n);
+  } catch (e) { /* stale id -> stay on default screen */ }
+}
 function switchScreen(name) {
   if (state.dirtyChanges && countChanges() > 0) {
     if (!confirm('You have unsaved changes. Leave without saving?')) return;
   }
   state.currentScreen = name;
+  _persistScreen(name);
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   // Keep parent module highlighted on detail screens
@@ -10817,6 +10846,7 @@ renderCustomersPage();
 renderDeviceProfilesPage();
 renderGatewaysPage();
 renderDashboardsPage();
+restoreScreen();
 if (window.lucide) window.lucide.createIcons();
 
 /* Hover tooltip activation: convert titleâdata-tip on icon-only controls
