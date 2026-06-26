@@ -9021,10 +9021,6 @@ function renderWidgetHead() {
           <div class="wgt-title">${_kvEscape(state.widgetBundle)}: select widget</div>
         </div>
         <button class="icon-btn" title="Close" onclick="closeWidgetModal()">${_CLOSE_SVG}</button>
-      </div>
-      <div style="display:flex;align-items:center;gap:12px;width:100%;flex-wrap:wrap">
-        <div class="search-box wgt-search" style="flex:1;max-width:none">${_SEARCH_SVG}<input id="widgetSearch" placeholder="Search widgets…" oninput="renderWidgetItems(this.value)" /></div>
-        <div class="wgt-tabs"><button>All</button><button class="active">Actual</button><button>Deprecated</button></div>
       </div>`;
   } else {
     head.innerHTML = `
