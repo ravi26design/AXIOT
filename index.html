@@ -2543,16 +2543,10 @@
 .wgt-info svg{width:13px;height:13px}
 .wgt-preview{height:150px;background:var(--surface);border-top:1px solid var(--border);overflow:hidden;padding:12px}
 .wgt-preview svg{width:100%;height:100%;display:block}
-/* widget 3-step stepper */
-.wgt-steps{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;min-width:0}
-.wstep{display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);white-space:nowrap;max-width:230px;overflow:hidden;text-overflow:ellipsis}
-.wstep .num{width:19px;height:19px;border-radius:50%;background:var(--bg-hover);display:inline-grid;place-items:center;font-size:11px;font-weight:700;flex-shrink:0}
-.wstep.active{color:var(--text);font-weight:600}
-.wstep.active .num{background:var(--primary);color:#fff}
-.wstep.done .num{background:var(--primary);color:#fff}
-.wstep.clickable{cursor:pointer}
-.wstep.clickable:hover{color:var(--primary)}
-.wsep{color:var(--border-strong)}
+/* widget 3-step stepper (reuses .pw-step* from device/profile wizard) */
+.wgt-steps{display:flex;align-items:center;flex:1;min-width:0;gap:0}
+.wgt-steps .pw-step{min-width:0}
+.wgt-steps .pw-step-label{overflow:hidden;text-overflow:ellipsis}
 /* widget config form */
 .wcfg-body{padding:18px 22px 26px}
 .wcfg-seg{display:inline-flex;background:var(--bg-hover);border-radius:999px;padding:3px}
@@ -9057,12 +9051,16 @@ function wgtStep3Label() {
 }
 function wgtSteps(active) {
   const lbl = [ 'Select widgets Type', 'Select widget', wgtStep3Label() ];
-  function step(n, click) {
-    const cls = (active === n ? 'active' : (active > n ? 'done clickable' : ''));
-    const onclick = (active > n && click) ? ` onclick="${click}"` : '';
-    return `<span class="wstep ${cls}"${onclick}><span class="num">${n}</span>${_kvEscape(lbl[n-1])}</span>`;
+  const click = [ 'backToWidgetBundles()', 'backFromWidgetConfig()', '' ];
+  let out = '';
+  for (let n = 1; n <= 3; n++) {
+    const st = n < active ? 'done' : (n === active ? 'active' : 'idle');
+    const num = st === 'done' ? _PW_CHECK : String(n);
+    const onclick = (st === 'done' && click[n-1]) ? ` onclick="${click[n-1]}"` : '';
+    out += `<div class="pw-step ${st}"${onclick}><span class="pw-step-num">${num}</span><span class="pw-step-label">${_kvEscape(lbl[n-1])}</span></div>`;
+    if (n < 3) out += '<div class="pw-step-line"></div>';
   }
-  return `<div class="wgt-steps">${step(1,'backToWidgetBundles()')}<span class="wsep">&rsaquo;</span>${step(2,'backFromWidgetConfig()')}<span class="wsep">&rsaquo;</span>${step(3,'')}</div>`;
+  return `<div class="wgt-steps">${out}</div>`;
 }
 function renderWidgetHead() {
   const head = document.getElementById('wgtHead');
