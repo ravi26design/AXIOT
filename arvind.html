@@ -9691,7 +9691,7 @@ function renderDashboardCanvas() {
   const bigAdd = `<button class="dashcv-addwidget" onclick="dashCanvasAddWidget()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add new widget</span></button>`;
   let inner;
   if (widgets.length) inner = widgets.map(tile).join('');
-  else inner = `<div style="color:var(--text-muted);font-size:14px">No widgets yet${edit ? ' \u2014 use \u201cAdd widget\u201d above' : ''}</div>`;
+  else inner = edit ? bigAdd : '<div style="color:var(--text-muted);font-size:14px">No widgets to display</div>';
   c.innerHTML = `
     <div class="dashcv-bar">
       <div class="dashcv-bar-left"></div>
