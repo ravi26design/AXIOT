@@ -2520,8 +2520,9 @@
 .dashcv-title{font-size:26px;font-weight:700;color:var(--text);margin-top:2px;outline:none;display:inline-block;min-width:120px}
 .dashcv-canvas{position:relative;min-height:56vh;display:grid;place-items:center}
 .dashcv-addwidget{background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:30px 46px;display:inline-flex;align-items:center;gap:16px;cursor:pointer;color:var(--text-muted);transition:border-color .12s,color .12s,background .12s}
-.dashcv-canvas.has-widgets{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px;place-items:stretch;align-content:start;min-height:auto}
-.dashcv-widget{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;min-height:280px;box-shadow:var(--shadow-sm)}
+.dashcv-canvas.has-widgets{display:flex;flex-wrap:wrap;gap:18px;align-content:start;align-items:flex-start;min-height:auto}
+.dashcv-widget{position:relative;border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-sm)}
+.dashcv-resize{position:absolute;right:0;bottom:0;width:18px;height:18px;cursor:nwse-resize;background:linear-gradient(135deg,transparent 0 52%,var(--border-strong) 52% 60%,transparent 60% 70%,var(--border-strong) 70% 78%,transparent 78%);border-bottom-right-radius:12px;z-index:2}
 .dashcv-widget-head{cursor:grab}
 .dashcv-widget.dragging{opacity:.4}
 .dashcv-widget.dragover{outline:2px dashed var(--primary);outline-offset:3px}
@@ -9265,6 +9266,28 @@ function dashDragEnd() {
   _dragWid = null;
   document.querySelectorAll('.dashcv-widget.dragging, .dashcv-widget.dragover').forEach(e => e.classList.remove('dragging', 'dragover'));
 }
+function dashResizeStart(ev, id) {
+  ev.preventDefault(); ev.stopPropagation();
+  const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
+  const w = d && d.widgets && d.widgets.find(x => x.id === id);
+  if (!w) return;
+  const tile = ev.target.closest('.dashcv-widget');
+  tile.setAttribute('draggable', 'false');
+  const sx = ev.clientX, sy = ev.clientY, sw = tile.offsetWidth, sh = tile.offsetHeight;
+  function move(e) {
+    const nw = Math.max(240, sw + (e.clientX - sx));
+    const nh = Math.max(170, sh + (e.clientY - sy));
+    tile.style.width = nw + 'px'; tile.style.height = nh + 'px';
+    w.w = nw; w.h = nh;
+  }
+  function up() {
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', up);
+    if (state.canvasEdit !== false) tile.setAttribute('draggable', 'true');
+  }
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+}
 function wcfgToggle(el) { el.classList.toggle('on'); }
 function wcfgChip(el) { el.classList.toggle('on'); }
 function wcfgPick(el) { Array.from(el.parentNode.children).forEach(c => c.classList.remove('on')); el.classList.add('on'); }
@@ -9688,14 +9711,15 @@ function renderDashboardCanvas() {
         <button class="btn btn-primary btn-sm" onclick="saveDashboardCanvas()">${li('check')} Save</button>` : `
         <button class="btn btn-primary btn-sm" onclick="dashCanvasEdit()">${li('pencil')} Edit</button>`;
   const tile = w => `
-          <div class="dashcv-widget"${edit ? ` draggable="true" data-wid="${w.id}" ondragstart="dashDragStart(event,'${w.id}')" ondragover="dashDragOver(event)" ondrop="dashDrop(event,'${w.id}')" ondragend="dashDragEnd(event)"` : ''}>
+          <div class="dashcv-widget" style="width:${w.w||380}px;height:${w.h||280}px"${edit ? ` draggable="true" data-wid="${w.id}" ondragstart="dashDragStart(event,'${w.id}')" ondragover="dashDragOver(event)" ondrop="dashDrop(event,'${w.id}')" ondragend="dashDragEnd(event)"` : ''}>
             <div class="dashcv-widget-head">
               <span class="dashcv-widget-title">${_kvEscape(w.title)}</span>
               ${edit ? `<span class="dashcv-widget-del" title="Remove" onclick="dashRemoveWidget('${w.id}')">${li('x')}</span>` : ''}
             </div>
             <div class="dashcv-widget-body">${wItemPreview(w.type) || ''}</div>
+            ${edit ? `<span class="dashcv-resize" title="Drag to resize" onmousedown="dashResizeStart(event,'${w.id}')"></span>` : ''}
           </div>`;
-  const addTile = `<button class="dashcv-addtile" onclick="dashCanvasAddWidget()"><span style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add new widget</span></span></button>`;
+  const addTile = `<button class="dashcv-addtile" style="width:380px;height:280px" onclick="dashCanvasAddWidget()"><span style="display:flex;flex-direction:column;align-items:center;gap:8px"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add new widget</span></span></button>`;
   const bigAdd = `<button class="dashcv-addwidget" onclick="dashCanvasAddWidget()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>Add new widget</span></button>`;
   let inner;
   if (widgets.length) inner = widgets.map(tile).join('') + (edit ? addTile : '');
