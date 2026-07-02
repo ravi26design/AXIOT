@@ -2530,6 +2530,10 @@
 .dashcv-widget-title{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dashcv-widget-del{color:var(--text-muted);cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:5px;flex-shrink:0}
 .dashcv-widget-del:hover{background:var(--bg-hover);color:var(--danger)}
+.dashcv-widget-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.dashcv-widget-cfg{color:var(--text-muted);cursor:pointer;width:24px;height:24px;display:grid;place-items:center;border-radius:5px}
+.dashcv-widget-cfg:hover{background:var(--bg-hover);color:var(--primary)}
+.dashcv-widget-cfg svg{width:15px;height:15px}
 .dashcv-widget-del svg{width:15px;height:15px}
 .dashcv-widget-body{flex:1;padding:16px 18px;display:flex;align-items:center;justify-content:center;min-height:0}
 .dashcv-widget-body svg{width:100%;height:100%;display:block}
@@ -2621,7 +2625,7 @@
   <div class="drawer-foot" id="wgtFooter" style="display:none">
     <div class="wcfg-foot">
       <button class="btn btn-ghost" onclick="backFromWidgetConfig()">Cancel</button>
-      <div style="display:flex;gap:8px"><button class="btn btn-secondary">Preview</button><button class="btn btn-primary" onclick="wcfgAdd()">Add</button></div>
+      <div style="display:flex;gap:8px"><button class="btn btn-secondary">Preview</button><button class="btn btn-primary" id="wcfgAddBtn" onclick="wcfgAdd()">Add</button></div>
     </div>
   </div>
 </aside>
@@ -9215,6 +9219,15 @@ function wcfgAdd() {
   const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
   const ti = document.getElementById('wcfgTitleInput');
   const title = (ti && ti.value.trim()) || state.widgetItem || 'Widget';
+  if (state.editingWidgetId) {
+    const ew = d && d.widgets && d.widgets.find(x => x.id === state.editingWidgetId);
+    if (ew) ew.title = title;
+    state.editingWidgetId = null;
+    closeWidgetModal();
+    renderDashboardCanvas();
+    toast('Widget updated', 'success');
+    return;
+  }
   const items = widgetItemsFor(state.widgetBundle);
   const it = items.find(x => x[0] === state.widgetItem);
   const type = it ? it[2] : '_bundle';
@@ -9231,6 +9244,20 @@ function dashRemoveWidget(id) {
   const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
   if (d && d.widgets) d.widgets = d.widgets.filter(w => w.id !== id);
   renderDashboardCanvas();
+}
+function dashConfigWidget(id) {
+  const d = DASHBOARDS.find(x => x.id === state.canvasDashId);
+  const w = d && d.widgets && d.widgets.find(x => x.id === id);
+  if (!w) return;
+  openWidgetModal();
+  state.editingWidgetId = id;
+  state.widgetBundle = w.bundle || 'Charts';
+  state.widgetItem = w.title;
+  state.widgetMode = 'config';
+  renderWidgetHead();
+  renderWidgetConfig();
+  setWidgetView('config');
+  const ab = document.getElementById('wcfgAddBtn'); if (ab) ab.textContent = 'Apply';
 }
 let _dragWid = null;
 function dashDragStart(ev, id) {
@@ -9681,6 +9708,8 @@ function renderWidgetConfig() {
   if (window.lucide) window.lucide.createIcons();
 }
 function openWidgetModal() {
+  state.editingWidgetId = null;
+  const _ab = document.getElementById('wcfgAddBtn'); if (_ab) _ab.textContent = 'Add';
   state.widgetMode = 'bundles';
   renderWidgetHead();
   renderWidgetBundles('');
@@ -9714,7 +9743,7 @@ function renderDashboardCanvas() {
           <div class="dashcv-widget" style="width:${w.w||380}px;height:${w.h||280}px"${edit ? ` draggable="true" data-wid="${w.id}" ondragstart="dashDragStart(event,'${w.id}')" ondragover="dashDragOver(event)" ondrop="dashDrop(event,'${w.id}')" ondragend="dashDragEnd(event)"` : ''}>
             <div class="dashcv-widget-head">
               <span class="dashcv-widget-title">${_kvEscape(w.title)}</span>
-              ${edit ? `<span class="dashcv-widget-del" title="Remove" onclick="dashRemoveWidget('${w.id}')">${li('x')}</span>` : ''}
+              ${edit ? `<span class="dashcv-widget-actions"><span class="dashcv-widget-cfg" title="Configure" onclick="dashConfigWidget('${w.id}')">${li('settings')}</span><span class="dashcv-widget-del" title="Remove" onclick="dashRemoveWidget('${w.id}')">${li('x')}</span></span>` : ''}
             </div>
             <div class="dashcv-widget-body">${wItemPreview(w.type) || ''}</div>
             ${edit ? `<span class="dashcv-resize" title="Drag to resize" onmousedown="dashResizeStart(event,'${w.id}')"></span>` : ''}
