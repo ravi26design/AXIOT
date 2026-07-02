@@ -9500,7 +9500,7 @@ function _alarmTableConfigHTML() {
         <div class="wcfg-line"><span class="lbl" style="flex:1">Background color</span><span class="wcfg-swatch" style="width:34px;background:var(--surface);border:1px solid var(--border-strong)"></span></div>
       </div>
     </div>
-    <div class="wcfg-section"><div class="wcfg-card"><div style="display:flex;align-items:center;justify-content:space-between"><div class="wcfg-card-title" style="margin:0">Actions</div><button class="btn btn-secondary btn-sm">Add action</button></div></div></div>`;
+    `;
 }
 function _alarmCountConfigHTML() {
   return `
@@ -9541,7 +9541,7 @@ function _alarmCountConfigHTML() {
         <div class="wcfg-line"><span class="lbl" style="flex:1">Card border radius</span><input class="wcfg-in" style="width:90px" value="0px"></div>
       </div>
     </div>
-    <div class="wcfg-section"><div class="wcfg-card"><div style="display:flex;align-items:center;justify-content:space-between"><div class="wcfg-card-title" style="margin:0">Actions</div><button class="btn btn-secondary btn-sm">Add action</button></div></div></div>`;
+    `;
 }
 function _cardConfigHTML() {
   const ABTN = '<span class="wcfg-ico"><span style="font-size:13px;border-bottom:1.5px solid currentColor;line-height:1.1">A</span></span>';
@@ -9578,14 +9578,7 @@ function _cardConfigHTML() {
       </div>
     </div>
 
-    <div class="wcfg-section">
-      <div class="wcfg-card">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div class="wcfg-card-title" style="margin:0">Actions</div>
-          <button class="btn btn-secondary btn-sm">Add action</button>
-        </div>
-      </div>
-    </div>`;
+    `;
 }
 function renderWidgetConfig() {
   const body = document.getElementById('widgetConfigBody');
