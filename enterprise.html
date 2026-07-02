@@ -9727,10 +9727,7 @@ function renderDashboardCanvas() {
   else inner = edit ? bigAdd : '<div style="color:var(--text-muted);font-size:14px">No widgets to display</div>';
   c.innerHTML = `
     <div class="dashcv-bar">
-      <div class="dashcv-bar-left">
-        <button class="btn btn-ghost btn-sm">${li('layers')} States</button>
-        <button class="btn btn-ghost btn-sm">${li('layout-template')} Layouts</button>
-      </div>
+      <div class="dashcv-bar-left"></div>
       <div class="dashcv-bar-right">${rightBar}</div>
     </div>
     <div class="dashcv-body">
